@@ -223,9 +223,9 @@ const DB={
       .eq('class_name',kelas).eq('date',date).eq('subject',subjek||'').maybeSingle();
     if(error)throw error;return data;
   },
-  async saveSession(kelas,date,subjek,absent){
+  async saveSession(kelas,date,subjek,recorded_by,absent){
     const{data:s,error:e1}=await sb.from('attendance_sessions')
-      .upsert({class_name:kelas,date,subject:subjek||''},{onConflict:'class_name,date,subject'}).select('id').single();
+      .upsert({class_name:kelas,date,subject:subjek||'',recorded_by},{onConflict:'class_name,date,subject'}).select('id').single();
     if(e1)throw e1;
     const{error:e2}=await sb.from('absentees').delete().eq('session_id',s.id);if(e2)throw e2;
     if(absent.length){const{error:e3}=await sb.from('absentees').insert(absent.map(a=>({session_id:s.id,student_id:a.student_id,reason:a.reason})));if(e3)throw e3;}
@@ -385,7 +385,7 @@ $('#btn-simpan').onclick=async()=>{
   // Kena update schema supaya unique termasuk subject
   $('#btn-simpan').disabled=true;
   try{
-    await DB.saveSession(current.kelas,current.date,current.subjek,
+    await DB.saveSession(current.kelas,current.date,current.subjek,state.teacher?.ic||null,
       Object.entries(current.absent).map(([student_id,reason])=>({student_id,reason})));
     $('#save-info').textContent='Disimpan ✓';toast('Rekod disimpan ✓');
   }catch(e){toast('Ralat simpan: '+e.message);}
