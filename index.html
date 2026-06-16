@@ -13,18 +13,15 @@
   *{box-sizing:border-box}html,body{margin:0;padding:0}
   body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45}
   .wrap{max-width:780px;margin:0 auto;padding:0 16px 120px}
-  .hidden{display:none}
+  .hidden{display:none!important}
 
-  /* Login / set password */
   .auth-screen{min-height:100vh;display:grid;place-items:center;padding:20px}
   .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:var(--shadow)}
   .auth-card .logo{width:48px;height:48px;border-radius:12px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800;margin-bottom:16px}
-  .auth-card h2{margin:0 0 4px;font-size:20px}
-  .auth-card p{margin:0 0 20px;font-size:13px;color:var(--muted)}
+  .auth-card h2{margin:0 0 4px;font-size:20px}.auth-card p{margin:0 0 20px;font-size:13px;color:var(--muted)}
   .auth-card label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 5px}
   .auth-card input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px}
-  .auth-card input:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:var(--brand)}
-  .auth-card .btn{width:100%;margin-top:18px}
+  .auth-card input:focus{outline:2px solid var(--brand);outline-offset:-1px}
   .auth-note{font-size:12px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.5}
 
   header.app{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
@@ -32,13 +29,13 @@
   .logo{width:36px;height:36px;border-radius:10px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;flex:none}
   .head-inner h1{font-size:15px;margin:0;font-weight:700}.head-inner p{margin:0;font-size:12px;color:var(--muted)}
   .head-inner .sp{flex:1}
-  .logout{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:13px;padding:7px 13px;border-radius:9px;cursor:pointer}
+  .hbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:13px;padding:7px 13px;border-radius:9px;cursor:pointer;text-decoration:none;display:inline-block}
   .tabs{display:flex;gap:4px;max-width:780px;margin:0 auto;padding:0 12px}
   .tab{flex:1;padding:11px;border:0;background:none;font:inherit;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent}
   .tab.active{color:var(--brand);border-bottom-color:var(--brand)}
 
   .context{display:flex;gap:10px;margin:16px 0 8px;flex-wrap:wrap}
-  .field{flex:1;min-width:140px}
+  .field{flex:1;min-width:130px}
   .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
   select,input[type=date],input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px;background:var(--surface);color:var(--ink)}
   select:focus,input:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:var(--brand)}
@@ -52,7 +49,7 @@
   .roster{display:flex;flex-direction:column;gap:8px}
   .student{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);transition:.12s}
   .student.absent{border-color:var(--absent);background:#fff7f5}
-  .row{display:flex;align-items:center;gap:12px}
+  .srow{display:flex;align-items:center;gap:12px}
   .num{width:26px;color:var(--muted);font-size:13px;font-weight:600;flex:none}
   .who{flex:1;min-width:0}.who .name{font-weight:600}.who .meta{font-size:12px;color:var(--muted);font-weight:500}
   .toggle{border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:700;font-size:13px;padding:8px 14px;border-radius:999px;cursor:pointer;flex:none}
@@ -64,105 +61,101 @@
   .savebar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px;z-index:30}
   .savebar .inner{max-width:780px;margin:0 auto;display:flex;gap:12px;align-items:center}
   .save-info{flex:1;font-size:13px;color:var(--muted)}
-  .btn{border:0;border-radius:11px;padding:13px 22px;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+  .btn{border:0;border-radius:11px;padding:12px 20px;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
   .btn-primary{background:var(--brand);color:#fff}.btn-primary:active{background:var(--brand-dark)}
   .btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
   .btn:disabled{opacity:.5;cursor:default}
 
-  /* Data page */
-  .data-bar{display:flex;gap:10px;align-items:flex-end;margin:16px 0 6px;flex-wrap:wrap}
+  /* Data */
   .dcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:8px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px}
   .dcard .gauge{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;flex:none;color:#fff}
-  .dcard .info{flex:1;min-width:0}
-  .dcard .cn{font-weight:700}.dcard .det{font-size:12px;color:var(--muted)}
-  .legend{font-size:12px;color:var(--muted);margin:4px 2px 14px}
-  .legend b{color:var(--ink)}
+  .dcard .info{flex:1;min-width:0}.dcard .cn{font-weight:700}.dcard .det{font-size:12px;color:var(--muted)}
+  .legend{font-size:12px;color:var(--muted);margin:12px 2px 10px}.legend b{color:var(--ink)}
 
-  .adm-nav{display:flex;gap:6px;margin:16px 0 6px}
-  .adm-nav button{flex:1;padding:9px;border:1px solid var(--line);background:var(--surface);border-radius:10px;font:inherit;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer}
-  .adm-nav button.active{background:var(--ink);border-color:var(--ink);color:#fff}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
-  .card h3{margin:0 0 10px;font-size:14px}
-  .addrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-  .addrow input,.addrow select{flex:1;min-width:110px}.addrow .btn{padding:11px 16px;font-size:14px}
-  .item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
-  .item:first-of-type{border-top:0}.item .grow{flex:1;min-width:0}
-  .item .nm{font-weight:600}.item .sub{font-size:12px;color:var(--muted)}
-  .icon-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:12px;padding:6px 11px;border-radius:8px;cursor:pointer}
-  .icon-btn.danger{color:var(--absent)}
-  .acct-tip{background:#eef3ff;border:1px solid #d4e0ff;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-top:8px;line-height:1.5}
-  .acct-tip code{background:#fff;padding:1px 5px;border-radius:4px}
+  /* Laporan */
+  .lap-head{display:flex;gap:10px;align-items:flex-end;margin:16px 0 10px;flex-wrap:wrap}
+  .lap-head .field{min-width:140px}
+  .rpt-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .rpt-card h4{margin:0 0 6px;font-size:14px;font-weight:700}
+  .rpt-card .sub{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .rpt-table{width:100%;border-collapse:collapse;font-size:13px}
+  .rpt-table th{text-align:left;padding:7px 10px;background:var(--bg);font-weight:700;font-size:12px;color:var(--muted)}
+  .rpt-table td{padding:8px 10px;border-top:1px solid var(--line)}
+  .badge-reason{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--absent-soft);color:var(--absent)}
 
-  .rec-reason{color:var(--muted);font-size:13px;font-weight:600}
   .empty{text-align:center;color:var(--muted);padding:42px 16px;font-size:14px}
   .empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
   .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .setup{max-width:560px;margin:60px auto;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
-  .setup code{background:#f0f2f6;padding:2px 6px;border-radius:5px}.setup pre{background:#0f1726;color:#e6edf6;padding:14px;border-radius:10px;overflow:auto;font-size:12.5px}
+  @media print{header.app,.tabs,.context,.savebar,.lap-head .btn,.toast{display:none!important}body{background:#fff}.wrap{padding:0}}
 </style>
 </head>
 <body>
 
-<!-- SETUP (kalau key belum diisi) -->
-<div id="setup-screen" class="setup hidden">
-  <h2>Sambung ke database dulu</h2>
-  <p>Dalam <code>index.html</code>, isi bahagian KONFIGURASI:</p>
-  <pre>const SUPABASE_URL  = "https://xxxx.supabase.co";
-const SUPABASE_ANON = "eyJhbGci...";</pre>
-  <p>Supabase &rarr; Project Settings &rarr; API. Penuh dalam PANDUAN.</p>
-</div>
-
-<!-- LOGIN -->
 <div id="login-screen" class="auth-screen hidden">
   <div class="auth-card">
     <div class="logo">KT</div>
     <h2>Log Masuk Guru</h2>
     <p>Sistem Kehadiran Kelas Tambahan · SMK Batu Maung</p>
-    <label for="lg-ic">No. Kad Pengenalan</label>
+    <label>No. Kad Pengenalan</label>
     <input type="text" id="lg-ic" inputmode="numeric" placeholder="cth: 900101071234" autocomplete="username">
-    <label for="lg-pw">Kata Laluan</label>
+    <label>Kata Laluan</label>
     <input type="password" id="lg-pw" placeholder="Kali pertama: 4 digit akhir IC" autocomplete="current-password">
-    <button class="btn btn-primary" id="lg-btn">Log Masuk</button>
-    <div class="auth-note">Kali pertama log masuk, guna <b>4 digit akhir IC</b> sebagai kata laluan. Anda akan diminta tetapkan kata laluan baharu.</div>
+    <button class="btn btn-primary" id="lg-btn" style="width:100%;margin-top:18px">Log Masuk</button>
+    <div class="auth-note">Kali pertama, guna <b>4 digit akhir IC</b> sebagai kata laluan.</div>
   </div>
 </div>
 
-<!-- SET PASSWORD (paksa kali pertama) -->
 <div id="setpw-screen" class="auth-screen hidden">
   <div class="auth-card">
     <div class="logo">KT</div>
     <h2>Tetapkan Kata Laluan</h2>
-    <p>Untuk keselamatan, sila tukar kata laluan default anda.</p>
-    <label for="sp-pw">Kata Laluan Baharu (min 6 aksara)</label>
+    <p>Sila tukar kata laluan default anda.</p>
+    <label>Kata Laluan Baharu (min 6 aksara)</label>
     <input type="password" id="sp-pw" autocomplete="new-password">
-    <label for="sp-pw2">Sahkan Kata Laluan</label>
+    <label>Sahkan Kata Laluan</label>
     <input type="password" id="sp-pw2" autocomplete="new-password">
-    <button class="btn btn-primary" id="sp-btn">Simpan & Teruskan</button>
+    <button class="btn btn-primary" id="sp-btn" style="width:100%;margin-top:18px">Simpan & Teruskan</button>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
 <header class="app">
   <div class="head-inner">
     <div class="logo">KT</div>
     <div><h1>Kehadiran Kelas Tambahan</h1><p id="who-am-i">—</p></div>
     <div class="sp"></div>
-    <a href="admin.html" class="logout" style="text-decoration:none;margin-right:6px" id="lnk-admin">Admin</a>
-    <button class="logout" id="btn-logout">Log Keluar</button>
+    <a href="admin.html" class="hbtn" id="lnk-admin" style="margin-right:6px">Admin</a>
+    <button class="hbtn" id="btn-logout">Log Keluar</button>
   </div>
   <div class="tabs">
     <button class="tab active" data-tab="ambil">Ambil Kehadiran</button>
     <button class="tab" data-tab="data">Data</button>
+    <button class="tab" data-tab="laporan">Laporan</button>
   </div>
 </header>
 
 <div class="wrap">
+  <!-- AMBIL -->
   <section id="tab-ambil">
     <div class="context">
-      <div class="field"><label for="kelas">Kelas</label><select id="kelas"></select></div>
-      <div class="field"><label for="tarikh">Tarikh</label><input type="date" id="tarikh"></div>
+      <div class="field"><label>Kelas</label><select id="kelas"></select></div>
+      <div class="field"><label>Subjek</label>
+        <select id="subjek">
+          <option value="Matematik Tambahan">Matematik Tambahan</option>
+          <option value="Fizik">Fizik</option>
+          <option value="Kimia">Kimia</option>
+          <option value="Biologi">Biologi</option>
+          <option value="Sains Tambahan">Sains Tambahan</option>
+          <option value="Bahasa Melayu">Bahasa Melayu</option>
+          <option value="Bahasa Inggeris">Bahasa Inggeris</option>
+          <option value="Sejarah">Sejarah</option>
+          <option value="Pendidikan Islam">Pendidikan Islam</option>
+          <option value="Lain-lain">Lain-lain (taip)</option>
+        </select>
+      </div>
+      <div class="field hidden" id="subjek-custom-wrap"><label>Nama Subjek</label><input type="text" id="subjek-custom" placeholder="Taip nama subjek"></div>
+      <div class="field"><label>Tarikh</label><input type="date" id="tarikh"></div>
     </div>
     <div class="summary">
       <div class="stat present"><div class="n" id="stat-hadir">0</div><div class="l">Hadir</div></div>
@@ -173,9 +166,22 @@ const SUPABASE_ANON = "eyJhbGci...";</pre>
     <div class="roster" id="roster"></div>
   </section>
 
+  <!-- DATA (ikut kelas guru) -->
   <section id="tab-data" class="hidden">
-    <p class="legend">Kadar kehadiran setiap kelas (dari semua sesi tersimpan). Disusun <b>terendah dahulu</b>. <span style="color:var(--absent)">●</span> &lt;80% &nbsp; <span style="color:var(--warn)">●</span> 80–90% &nbsp; <span style="color:var(--present)">●</span> ≥90%</p>
+    <p class="legend">Kelas awak sahaja. Disusun <b>kehadiran terendah dahulu</b>. <span style="color:var(--absent)">●</span> &lt;80% &nbsp;<span style="color:var(--warn)">●</span> 80–90% &nbsp;<span style="color:var(--present)">●</span> ≥90%</p>
     <div id="data-list"></div>
+  </section>
+
+  <!-- LAPORAN -->
+  <section id="tab-laporan" class="hidden">
+    <div class="lap-head">
+      <div class="field"><label>Kelas</label><select id="lap-kelas"></select></div>
+      <div class="field"><label>Dari</label><input type="date" id="lap-from"></div>
+      <div class="field"><label>Hingga</label><input type="date" id="lap-to"></div>
+      <button class="btn btn-primary" id="lap-cari">Cari</button>
+      <button class="btn btn-ghost" id="lap-print">Cetak</button>
+    </div>
+    <div id="lap-container"></div>
   </section>
 </div>
 
@@ -189,165 +195,219 @@ const SUPABASE_ANON = "eyJhbGci...";</pre>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ================= KONFIGURASI — ISI 2 BARIS INI ================= */
 const SUPABASE_URL  = "https://uxodkjkpwiyfxozgrnib.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4b2Rramtwd2l5ZnhvemdybmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDY0MTUsImV4cCI6MjA5NzE4MjQxNX0.ndWT0nLnNQTo7rp8naPzYfRUXc2eRZ1U06GQScSCqBY";
-/* ================================================================= */
-
-const $=s=>document.querySelector(s);
-const todayISO=()=>new Date().toISOString().slice(0,10);
-const esc=s=>(s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const EMAIL_DOMAIN='@kehadiran.local';
 const ADMIN_EMAIL='admin@kehadiran.local';
+const EMAIL_DOMAIN='@kehadiran.local';
+
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+const $=s=>document.querySelector(s);
+const esc=s=>(s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const todayISO=()=>new Date().toISOString().slice(0,10);
 const icToEmail=ic=>ic.replace(/\D/g,'')+EMAIL_DOMAIN;
 const emailToIc=em=>(em||'').split('@')[0];
+const fmtDate=iso=>new Date(iso+'T00:00').toLocaleDateString('ms-MY',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
-
-if(SUPABASE_URL.includes('PASTE_')){ $('#setup-screen').classList.remove('hidden'); }
-const sb = SUPABASE_URL.includes('PASTE_') ? null : supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const REASONS=['Sakit','Kebenaran','Tanpa Sebab','Lain-lain'];
 const state={teacher:null,students:[]};
-const current={kelas:null,date:null,roster:[],absent:{}};
+const current={kelas:null,date:null,subjek:null,roster:[],absent:{}};
 
-/* =================== DATA LAYER =================== */
+/* ===== DB ===== */
 const DB={
-  async myTeacher(ic){ const {data,error}=await sb.from('teachers').select('*').eq('ic',ic).maybeSingle(); if(error)throw error; return data; },
-  async setPasswordFlag(ic){ const {error}=await sb.from('teachers').update({password_set:true}).eq('ic',ic); if(error)throw error; },
-  async teachers(){ const {data,error}=await sb.from('teachers').select('*').order('name'); if(error)throw error; return data; },
-  async addTeacher(t){ const {error}=await sb.from('teachers').insert(t); if(error)throw error; },
-  async updateTeacher(id,patch){ const {error}=await sb.from('teachers').update(patch).eq('id',id); if(error)throw error; },
-  async deleteTeacher(id){ const {error}=await sb.from('teachers').delete().eq('id',id); if(error)throw error; },
-
-  async students(){ const {data,error}=await sb.from('students').select('*').order('name'); if(error)throw error; return data; },
-  async addStudent(s){ const {error}=await sb.from('students').insert(s); if(error)throw error; },
-  async updateStudent(id,patch){ const {error}=await sb.from('students').update(patch).eq('id',id); if(error)throw error; },
-  async deleteStudent(id){ const {error}=await sb.from('students').delete().eq('id',id); if(error)throw error; },
-  async upsertStudentByNokp(s){ const {error}=await sb.from('students').upsert(s,{onConflict:'nokp'}); if(error)throw error; },
-
-  async getSession(kelas,date){ const {data,error}=await sb.from('attendance_sessions').select('id,absentees(student_id,reason)').eq('class_name',kelas).eq('date',date).maybeSingle(); if(error)throw error; return data; },
-  async saveSession(kelas,date,absent){
-    const {data:s,error:e1}=await sb.from('attendance_sessions').upsert({class_name:kelas,date},{onConflict:'class_name,date'}).select('id').single(); if(e1)throw e1;
-    const {error:e2}=await sb.from('absentees').delete().eq('session_id',s.id); if(e2)throw e2;
-    if(absent.length){ const {error:e3}=await sb.from('absentees').insert(absent.map(a=>({session_id:s.id,student_id:a.student_id,reason:a.reason}))); if(e3)throw e3; }
+  async myTeacher(ic){const{data,error}=await sb.from('teachers').select('*').eq('ic',ic).maybeSingle();if(error)throw error;return data;},
+  async setPasswordFlag(ic){const{error}=await sb.from('teachers').update({password_set:true}).eq('ic',ic);if(error)throw error;},
+  async students(){const{data,error}=await sb.from('students').select('*').order('name');if(error)throw error;return data;},
+  async getSession(kelas,date,subjek){
+    const{data,error}=await sb.from('attendance_sessions').select('id,absentees(student_id,reason)')
+      .eq('class_name',kelas).eq('date',date).eq('subject',subjek||'').maybeSingle();
+    if(error)throw error;return data;
   },
-  async allSessions(){ const {data,error}=await sb.from('attendance_sessions').select('class_name,date,absentees(student_id)'); if(error)throw error; return data; }
+  async saveSession(kelas,date,subjek,absent){
+    const{data:s,error:e1}=await sb.from('attendance_sessions')
+      .upsert({class_name:kelas,date,subject:subjek||''},{onConflict:'class_name,date,subject'}).select('id').single();
+    if(e1)throw e1;
+    const{error:e2}=await sb.from('absentees').delete().eq('session_id',s.id);if(e2)throw e2;
+    if(absent.length){const{error:e3}=await sb.from('absentees').insert(absent.map(a=>({session_id:s.id,student_id:a.student_id,reason:a.reason})));if(e3)throw e3;}
+  },
+  async sessionsByClass(kelas){
+    const{data,error}=await sb.from('attendance_sessions').select('class_name,date,subject,absentees(student_id)').eq('class_name',kelas);
+    if(error)throw error;return data;
+  },
+  async laporanSessions(kelas,from,to){
+    const{data,error}=await sb.from('attendance_sessions')
+      .select('id,date,subject,class_name,absentees(student_id,reason,students(name,nokp,kelas))')
+      .eq('class_name',kelas).gte('date',from).lte('date',to).order('date');
+    if(error)throw error;return data;
+  }
 };
 
-const classesFromStudents=()=>[...new Set(state.students.map(s=>s.kelas).filter(Boolean))].sort();
+const classesForTeacher=()=>{
+  const all=[...new Set(state.students.map(s=>s.kelas).filter(Boolean))].sort();
+  // Kalau guru ada class_name, tunjuk kelas dia dulu, lain di bawah
+  if(state.teacher?.class_name){
+    const mine=all.filter(c=>c===state.teacher.class_name);
+    const rest=all.filter(c=>c!==state.teacher.class_name);
+    return [...mine,...rest];
+  }
+  return all;
+};
 const rosterFor=kelas=>state.students.filter(s=>s.kelas===kelas).sort((a,b)=>a.name.localeCompare(b.name));
+function getSubjek(){
+  const v=$('#subjek').value;
+  return v==='Lain-lain'?($('#subjek-custom').value.trim()||'Lain-lain'):v;
+}
 
-/* =================== AUTH =================== */
+/* ===== AUTH ===== */
+function showScreen(name){
+  ['login-screen','setpw-screen','app'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('hidden');});
+  const el=document.getElementById(name==='app'?'app':name+'-screen');
+  if(el){el.classList.remove('hidden');window.scrollTo(0,0);}
+}
 async function boot(){
-  if(!sb)return;
-  const {data:{session}}=await sb.auth.getSession();
-  // Tolak sesi admin — admin guna admin.html, bukan sini
-  if(session && session.user.email===ADMIN_EMAIL){ await sb.auth.signOut(); showScreen('login'); return; }
+  const{data:{session}}=await sb.auth.getSession();
+  if(session&&session.user.email===ADMIN_EMAIL){await sb.auth.signOut();showScreen('login');return;}
   if(session) await afterLogin(); else showScreen('login');
 }
-function showScreen(name){
-  const ids=['setup-screen','login-screen','setpw-screen','app'];
-  ids.forEach(id=>{ const el=document.getElementById(id); if(el){el.style.display='none';el.classList.add('hidden');} });
-  const target=name==='app'?'app':name+'-screen';
-  const el=document.getElementById(target); 
-  if(el){ el.style.display=''; el.classList.remove('hidden'); }
-  window.scrollTo(0,0);
-}
 $('#lg-btn').onclick=async()=>{
-  const ic=$('#lg-ic').value.trim(), pw=$('#lg-pw').value;
+  const ic=$('#lg-ic').value.trim(),pw=$('#lg-pw').value;
   if(!ic||!pw){toast('Isi IC & kata laluan');return;}
   $('#lg-btn').disabled=true;
-  const {error}=await sb.auth.signInWithPassword({email:icToEmail(ic),password:pw});
+  const{error}=await sb.auth.signInWithPassword({email:icToEmail(ic),password:pw});
   $('#lg-btn').disabled=false;
   if(error){toast('IC atau kata laluan salah');return;}
   await afterLogin();
 };
+$('#lg-pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#lg-btn').click();});
 async function afterLogin(){
-  const {data:{user}}=await sb.auth.getUser();
+  const{data:{user}}=await sb.auth.getUser();
   const ic=emailToIc(user.email);
-  let t=null; try{ t=await DB.myTeacher(ic); }catch(e){}
-  if(t && t.password_set===false){ showScreen('setpw'); return; }
-  state.teacher=t||{ic,name:ic};
+  let t=null;try{t=await DB.myTeacher(ic);}catch(e){}
+  if(t&&t.password_set===false){showScreen('setpw');return;}
+  state.teacher=t||{ic,name:ic,is_admin:false};
+  // Sembunyikan pautan Admin kalau bukan admin
+  if(!state.teacher.is_admin) $('#lnk-admin').classList.add('hidden');
   await enterApp();
 }
 $('#sp-btn').onclick=async()=>{
-  const pw=$('#sp-pw').value, pw2=$('#sp-pw2').value;
+  const pw=$('#sp-pw').value,pw2=$('#sp-pw2').value;
   if(pw.length<6){toast('Minimum 6 aksara');return;}
   if(pw!==pw2){toast('Kata laluan tak sama');return;}
   $('#sp-btn').disabled=true;
-  const {error}=await sb.auth.updateUser({password:pw});
+  const{error}=await sb.auth.updateUser({password:pw});
   if(error){toast('Ralat: '+error.message);$('#sp-btn').disabled=false;return;}
-  const {data:{user}}=await sb.auth.getUser();
-  try{ await DB.setPasswordFlag(emailToIc(user.email)); }catch(e){}
-  $('#sp-btn').disabled=false; toast('Kata laluan ditetapkan ✓');
+  const{data:{user}}=await sb.auth.getUser();
+  try{await DB.setPasswordFlag(emailToIc(user.email));}catch(e){}
+  $('#sp-btn').disabled=false;toast('Kata laluan ditetapkan ✓');
   await afterLogin();
 };
-$('#btn-logout').onclick=async()=>{ await sb.auth.signOut(); state.teacher=null; showScreen('login'); $('#lg-pw').value=''; };
+$('#btn-logout').onclick=async()=>{await sb.auth.signOut();state.teacher=null;showScreen('login');$('#lg-pw').value='';};
 
-/* =================== ENTER APP =================== */
+// Klik Admin — check is_admin dulu
+$('#lnk-admin').addEventListener('click',e=>{
+  if(!state.teacher?.is_admin){
+    e.preventDefault();
+    alert('⚠️ Anda tidak mempunyai akses ke panel Admin.\nSila hubungi pentadbir sistem.');
+  }
+});
+
+/* ===== ENTER APP ===== */
 async function enterApp(){
   showScreen('app');
   $('#who-am-i').textContent=(state.teacher.name||'Guru')+(state.teacher.class_name?(' · '+state.teacher.class_name):'');
   $('#tarikh').value=todayISO();
-  try{ state.students=await DB.students(); }catch(e){ toast('Ralat memuat pelajar: '+e.message); state.students=[]; }
-  fillClassDropdown();
+  try{state.students=await DB.students();}catch(e){toast('Ralat memuat pelajar');state.students=[];}
+  fillKelasDropdown();
+  fillLaporanKelas();
   await loadCurrent();
 }
-function fillClassDropdown(){
-  const cls=classesFromStudents();
-  $('#kelas').innerHTML=cls.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')||'<option value="">(Tiada pelajar)</option>';
-  if(state.teacher?.class_name && cls.includes(state.teacher.class_name)) $('#kelas').value=state.teacher.class_name;
+
+function fillKelasDropdown(){
+  const cls=classesForTeacher();
+  $('#kelas').innerHTML=cls.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')||'<option value="">(Tiada)</option>';
+  if(state.teacher?.class_name&&cls.includes(state.teacher.class_name))$('#kelas').value=state.teacher.class_name;
+}
+function fillLaporanKelas(){
+  const cls=classesForTeacher();
+  $('#lap-kelas').innerHTML=cls.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  // default range: bulan ini
+  const now=new Date(),y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0');
+  $('#lap-from').value=`${y}-${m}-01`;
+  $('#lap-to').value=todayISO();
 }
 
-/* =================== AMBIL =================== */
+// Subjek "Lain-lain" → tunjuk input teks
+$('#subjek').addEventListener('change',()=>{
+  const v=$('#subjek').value;
+  $('#subjek-custom-wrap').classList.toggle('hidden',v!=='Lain-lain');
+  loadCurrent();
+});
+$('#subjek-custom').addEventListener('change',loadCurrent);
+
+/* ===== AMBIL ===== */
 async function loadCurrent(){
-  current.kelas=$('#kelas').value||null; current.date=$('#tarikh').value; current.absent={};
-  if(!current.kelas){ current.roster=[]; renderRoster(); $('#save-info').textContent=''; return; }
+  current.kelas=$('#kelas').value||null;
+  current.date=$('#tarikh').value;
+  current.subjek=getSubjek();
+  current.absent={};
+  if(!current.kelas){current.roster=[];renderRoster();$('#save-info').textContent='';return;}
   current.roster=rosterFor(current.kelas);
-  try{ const s=await DB.getSession(current.kelas,current.date); if(s)s.absentees.forEach(a=>current.absent[a.student_id]=a.reason); $('#save-info').textContent=s?'Sudah ada rekod tarikh ini':'Belum disimpan'; }
-  catch(e){ toast('Ralat: '+e.message); }
+  try{
+    const s=await DB.getSession(current.kelas,current.date,current.subjek);
+    if(s)s.absentees.forEach(a=>current.absent[a.student_id]=a.reason);
+    $('#save-info').textContent=s?'Sudah ada rekod tarikh ini':'Belum disimpan';
+  }catch(e){toast('Ralat memuat: '+e.message);}
   renderRoster();
 }
 function renderRoster(){
   $('#roster').innerHTML=current.roster.map((s,i)=>{
-    const ab=current.absent[s.id]!==undefined, rs=current.absent[s.id];
-    return `<div class="student ${ab?'absent':''}" data-id="${s.id}"><div class="row"><span class="num">${i+1}.</span>
-      <span class="who"><span class="name">${esc(s.name)}</span><br><span class="meta">${esc(s.nokp)} · ${esc(s.kelas||'')}</span></span>
-      <button class="toggle" data-act="toggle">${ab?'Tidak Hadir':'Hadir'}</button></div>
+    const ab=current.absent[s.id]!==undefined,rs=current.absent[s.id];
+    return `<div class="student ${ab?'absent':''}" data-id="${s.id}">
+      <div class="srow"><span class="num">${i+1}.</span>
+        <span class="who"><span class="name">${esc(s.name)}</span><br><span class="meta">${esc(s.nokp)} · ${esc(s.kelas||'')}</span></span>
+        <button class="toggle" data-act="toggle">${ab?'Tidak Hadir':'Hadir'}</button></div>
       ${ab?`<div class="reasons">${REASONS.map(r=>`<button class="chip ${rs===r?'on':''}" data-act="reason" data-r="${r}">${r}</button>`).join('')}</div>`:''}</div>`;
   }).join('')||'<div class="empty"><strong>Tiada pelajar</strong>Kelas ini belum ada pelajar.</div>';
-  const total=current.roster.length, tidak=Object.keys(current.absent).length;
+  const total=current.roster.length,tidak=Object.keys(current.absent).length;
   $('#stat-jumlah').textContent=total;$('#stat-tidak').textContent=tidak;$('#stat-hadir').textContent=total-tidak;
 }
 $('#roster').addEventListener('click',e=>{
-  const b=e.target.closest('[data-act]'); if(!b)return; const id=e.target.closest('.student').dataset.id;
-  if(b.dataset.act==='toggle'){ current.absent[id]!==undefined?delete current.absent[id]:current.absent[id]='Tanpa Sebab'; renderRoster(); }
-  if(b.dataset.act==='reason'){ current.absent[id]=b.dataset.r; renderRoster(); }
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const id=e.target.closest('.student').dataset.id;
+  if(b.dataset.act==='toggle'){current.absent[id]!==undefined?delete current.absent[id]:current.absent[id]='Tanpa Sebab';renderRoster();}
+  if(b.dataset.act==='reason'){current.absent[id]=b.dataset.r;renderRoster();}
 });
 $('#kelas').addEventListener('change',loadCurrent);
 $('#tarikh').addEventListener('change',loadCurrent);
 $('#btn-simpan').onclick=async()=>{
   if(!current.kelas){toast('Tiada kelas');return;}
+  // Pastikan unique constraint ada (kelas+date+subject)
+  // Kena update schema supaya unique termasuk subject
   $('#btn-simpan').disabled=true;
-  try{ await DB.saveSession(current.kelas,current.date,Object.entries(current.absent).map(([student_id,reason])=>({student_id,reason}))); $('#save-info').textContent='Disimpan ✓'; toast('Rekod disimpan ✓'); }
-  catch(e){ toast('Ralat simpan: '+e.message); }
+  try{
+    await DB.saveSession(current.kelas,current.date,current.subjek,
+      Object.entries(current.absent).map(([student_id,reason])=>({student_id,reason})));
+    $('#save-info').textContent='Disimpan ✓';toast('Rekod disimpan ✓');
+  }catch(e){toast('Ralat simpan: '+e.message);}
   $('#btn-simpan').disabled=false;
 };
 
-/* =================== DATA =================== */
+/* ===== DATA (ikut kelas guru sahaja) ===== */
 async function renderData(){
-  const box=$('#data-list'); box.innerHTML='<div class="empty">Mengira…</div>';
+  const box=$('#data-list');box.innerHTML='<div class="empty">Mengira…</div>';
   try{
-    const sessions=await DB.allSessions();
-    const agg={};
-    classesFromStudents().forEach(c=>agg[c]={students:rosterFor(c).length,sessions:0,absent:0});
-    sessions.forEach(s=>{ if(!agg[s.class_name])agg[s.class_name]={students:rosterFor(s.class_name).length,sessions:0,absent:0}; agg[s.class_name].sessions++; agg[s.class_name].absent+=(s.absentees||[]).length; });
-    const rows=Object.entries(agg).map(([cn,v])=>{
-      const slots=v.students*v.sessions;
-      const rate=slots>0?((slots-v.absent)/slots*100):null;
-      return {cn,...v,rate};
-    }).sort((a,b)=>{ if(a.rate===null)return 1; if(b.rate===null)return -1; return a.rate-b.rate; });
-    if(!rows.length){ box.innerHTML='<div class="empty"><strong>Tiada data</strong>Belum ada rekod kehadiran.</div>'; return; }
+    const myClasses=classesForTeacher();
+    if(!myClasses.length){box.innerHTML='<div class="empty"><strong>Tiada kelas</strong></div>';return;}
+    const results=await Promise.all(myClasses.map(c=>DB.sessionsByClass(c)));
+    const rows=myClasses.map((cn,i)=>{
+      const sessions=results[i];
+      const students=rosterFor(cn).length;
+      let absent=0;
+      sessions.forEach(s=>absent+=(s.absentees||[]).length);
+      const slots=students*sessions.length;
+      const rate=slots>0?((slots-absent)/slots*100):null;
+      return{cn,students,sessions:sessions.length,absent,rate};
+    }).sort((a,b)=>{if(a.rate===null)return 1;if(b.rate===null)return -1;return a.rate-b.rate;});
     box.innerHTML=rows.map(r=>{
       const col=r.rate===null?'#9aa3b2':r.rate<80?'var(--absent)':r.rate<90?'var(--warn)':'var(--present)';
       const label=r.rate===null?'—':Math.round(r.rate)+'%';
@@ -355,21 +415,63 @@ async function renderData(){
         <div class="info"><div class="cn">${esc(r.cn)}</div>
         <div class="det">${r.students} pelajar · ${r.sessions} sesi · ${r.absent} kali tidak hadir</div></div></div>`;
     }).join('');
-  }catch(e){ box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>'; }
+  }catch(e){box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';}
 }
 
-/* =================== NAV =================== */
+/* ===== LAPORAN ===== */
+async function renderLaporan(){
+  const kelas=$('#lap-kelas').value,from=$('#lap-from').value,to=$('#lap-to').value;
+  if(!kelas||!from||!to){toast('Isi semua medan');return;}
+  const box=$('#lap-container');box.innerHTML='<div class="empty">Memuat…</div>';
+  try{
+    const sessions=await DB.laporanSessions(kelas,from,to);
+    if(!sessions.length){box.innerHTML='<div class="empty"><strong>Tiada sesi</strong>Tiada rekod kehadiran untuk tempoh ini.</div>';return;}
+    // Kumpul semua pelajar tidak hadir
+    const absentMap={};// student_id -> {name,nokp,kelas,reasons:[{date,subject,reason}]}
+    sessions.forEach(s=>{
+      (s.absentees||[]).forEach(a=>{
+        const nm=a.students?.name||a.student_id;
+        const nokp=a.students?.nokp||'';
+        if(!absentMap[a.student_id])absentMap[a.student_id]={name:nm,nokp,entries:[]};
+        absentMap[a.student_id].entries.push({date:s.date,subject:s.subject||'-',reason:a.reason});
+      });
+    });
+    const absentList=Object.values(absentMap).sort((a,b)=>a.name.localeCompare(b.name));
+    box.innerHTML=`
+      <div class="rpt-card">
+        <h4>Laporan Ketidakhadiran</h4>
+        <div class="sub">${esc(kelas)} · ${fmtDate(from)} – ${fmtDate(to)} · ${sessions.length} sesi · ${absentList.length} pelajar tidak hadir</div>
+        ${absentList.length?`<table class="rpt-table">
+          <tr><th>#</th><th>Nama Pelajar</th><th>NoKP</th><th>Tarikh</th><th>Subjek</th><th>Sebab</th></tr>
+          ${absentList.flatMap((p,i)=>p.entries.map((e,j)=>`
+            <tr>
+              <td>${j===0?i+1:''}</td>
+              <td>${j===0?`<b>${esc(p.name)}</b>`:''}</td>
+              <td>${j===0?esc(p.nokp):''}</td>
+              <td>${fmtDate(e.date)}</td>
+              <td>${esc(e.subject)}</td>
+              <td><span class="badge-reason">${esc(e.reason)}</span></td>
+            </tr>`)).join('')}
+        </table>`:'<div style="color:var(--present);font-weight:600;padding:10px 0">✓ Semua pelajar hadir sepanjang tempoh ini.</div>'}
+      </div>`;
+  }catch(e){box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';}
+}
+$('#lap-cari').onclick=renderLaporan;
+$('#lap-print').onclick=()=>window.print();
+
+/* ===== NAV ===== */
 document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');
   const k=tab.dataset.tab;
   $('#tab-ambil').classList.toggle('hidden',k!=='ambil');
   $('#tab-data').classList.toggle('hidden',k!=='data');
+  $('#tab-laporan').classList.toggle('hidden',k!=='laporan');
   $('#savebar').classList.toggle('hidden',k!=='ambil');
   if(k==='data')renderData();
-  if(k==='ambil'){fillClassDropdown();loadCurrent();}
+  if(k==='ambil'){fillKelasDropdown();loadCurrent();}
 }));
 
-if(sb) boot();
+boot();
 </script>
 </body>
 </html>
