@@ -149,12 +149,12 @@ const SUPABASE_ANON = "eyJhbGci...";</pre>
     <div class="logo">KT</div>
     <div><h1>Kehadiran Kelas Tambahan</h1><p id="who-am-i">—</p></div>
     <div class="sp"></div>
+    <a href="admin.html" class="logout" style="text-decoration:none;margin-right:6px" id="lnk-admin">Admin</a>
     <button class="logout" id="btn-logout">Log Keluar</button>
   </div>
   <div class="tabs">
     <button class="tab active" data-tab="ambil">Ambil Kehadiran</button>
     <button class="tab" data-tab="data">Data</button>
-    <button class="tab" data-tab="admin">Admin</button>
   </div>
 </header>
 
@@ -176,15 +176,6 @@ const SUPABASE_ANON = "eyJhbGci...";</pre>
   <section id="tab-data" class="hidden">
     <p class="legend">Kadar kehadiran setiap kelas (dari semua sesi tersimpan). Disusun <b>terendah dahulu</b>. <span style="color:var(--absent)">●</span> &lt;80% &nbsp; <span style="color:var(--warn)">●</span> 80–90% &nbsp; <span style="color:var(--present)">●</span> ≥90%</p>
     <div id="data-list"></div>
-  </section>
-
-  <section id="tab-admin" class="hidden">
-    <div class="adm-nav">
-      <button class="active" data-adm="guru">Guru</button>
-      <button data-adm="pelajar">Pelajar</button>
-    </div>
-    <div id="adm-guru"></div>
-    <div id="adm-pelajar" class="hidden"></div>
   </section>
 </div>
 
@@ -360,101 +351,16 @@ async function renderData(){
   }catch(e){ box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>'; }
 }
 
-/* =================== ADMIN: GURU =================== */
-async function renderGuru(){
-  let list=[]; try{ list=await DB.teachers(); }catch(e){ toast('Ralat: '+e.message); }
-  const cls=classesFromStudents();
-  const clsOpts=v=>'<option value="">(Tiada kelas)</option>'+cls.map(c=>`<option value="${esc(c)}" ${c===v?'selected':''}>${esc(c)}</option>`).join('');
-  $('#adm-guru').innerHTML=`<div class="card"><h3>Guru</h3>
-    <div class="addrow"><input type="text" id="g-name" placeholder="Nama"><input type="text" id="g-ic" placeholder="No. KP (12 digit)" inputmode="numeric"><select id="g-class">${clsOpts()}</select><button class="btn btn-primary" id="g-add">Tambah</button></div>
-    <div id="g-list">${list.map(t=>`<div class="item" data-id="${t.id}" data-ic="${esc(t.ic)}">
-      <span class="grow"><span class="nm">${esc(t.name)}</span><br><span class="sub">${esc(t.ic)} · ${esc(t.class_name||'tiada kelas')} · ${t.password_set?'kata laluan ditetapkan':'guna default'}</span></span>
-      <button class="icon-btn" data-act="reset">Reset PW</button>
-      <button class="icon-btn danger" data-act="del">Padam</button></div>`).join('')||'<div class="sub">Tiada guru.</div>'}</div>
-    <div class="acct-tip" id="g-tip"></div></div>`;
-
-  $('#g-add').onclick=async()=>{
-    const name=$('#g-name').value.trim(), ic=$('#g-ic').value.replace(/\D/g,''), cn=$('#g-class').value;
-    if(!name||!ic){toast('Nama & IC wajib');return;}
-    try{ await DB.addTeacher({name,ic,class_name:cn||null,password_set:false}); 
-      showAcctTip(ic); renderGuru(); toast('Guru ditambah'); }
-    catch(e){ toast('Ralat: '+(e.code==='23505'?'IC sudah wujud':e.message)); }
-  };
-  $('#g-list').onclick=async e=>{
-    const b=e.target.closest('[data-act]'); if(!b)return; const row=e.target.closest('.item'); const id=row.dataset.id, ic=row.dataset.ic;
-    if(b.dataset.act==='del'){ if(confirm('Padam rekod guru ini? (Akaun login di Supabase Auth kena padam berasingan.)')){ try{await DB.deleteTeacher(id);renderGuru();toast('Dipadam');}catch(e){toast('Ralat: '+e.message);} } }
-    if(b.dataset.act==='reset'){ try{ await DB.updateTeacher(id,{password_set:false}); showAcctTip(ic,true); renderGuru(); }catch(e){toast('Ralat: '+e.message);} }
-  };
-}
-function showAcctTip(ic,reset){
-  const last4=ic.slice(-4);
-  $('#g-tip').innerHTML=`<b>${reset?'Reset':'Langkah seterusnya'} — cipta akaun login di Supabase Dashboard:</b><br>
-    Authentication → Users → Add user →<br>
-    Email: <code>${esc(ic)}@kehadiran.local</code><br>
-    Password (default): <code>${esc(last4)}</code> &nbsp;(4 digit akhir IC)<br>
-    Guru log masuk guna IC + ${esc(last4)}, lepas tu sistem paksa tukar.`;
-}
-
-/* =================== ADMIN: PELAJAR =================== */
-async function renderPelajar(){
-  try{ state.students=await DB.students(); }catch(e){ toast('Ralat: '+e.message); }
-  $('#adm-pelajar').innerHTML=`<div class="card"><h3>Pelajar (${state.students.length})</h3>
-    <div class="addrow"><input type="text" id="p-nama" placeholder="Nama"><input type="text" id="p-nokp" placeholder="NoKP"><input type="text" id="p-kelas" placeholder="Kelas"><button class="btn btn-primary" id="p-add">Tambah</button></div>
-    <div class="addrow"><button class="btn btn-ghost" id="p-import">Import CSV</button><button class="btn btn-ghost" id="p-templat">Templat</button><input type="file" id="p-file" accept=".csv" hidden></div>
-    <div id="p-list">${state.students.map(s=>`<div class="item" data-id="${s.id}">
-      <span class="grow"><span class="nm">${esc(s.name)}</span><br><span class="sub">${esc(s.nokp)} · ${esc(s.kelas||'-')}</span></span>
-      <button class="icon-btn" data-act="edit">Edit</button><button class="icon-btn danger" data-act="del">Padam</button></div>`).join('')||'<div class="sub">Tiada pelajar.</div>'}</div></div>`;
-
-  $('#p-add').onclick=async()=>{ const name=$('#p-nama').value.trim(),nokp=$('#p-nokp').value.trim(),kelas=$('#p-kelas').value.trim();
-    if(!name||!nokp){toast('Nama & NoKP wajib');return;} try{await DB.addStudent({name,nokp,kelas});renderPelajar();fillClassDropdown();toast('Ditambah');}catch(e){toast('Ralat: '+(e.code==='23505'?'NoKP sudah wujud':e.message));} };
-  $('#p-templat').onclick=()=>download('templat_pelajar.csv','Nama,NoKP,Kelas\nAhmad Danial,080101071111,5 AVICENNA');
-  $('#p-import').onclick=()=>$('#p-file').click();
-  $('#p-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>importCSV(rd.result);rd.readAsText(f,'UTF-8');e.target.value='';};
-  $('#p-list').onclick=async e=>{
-    const b=e.target.closest('[data-act]'); if(!b)return; const row=e.target.closest('.item'); const id=row.dataset.id, s=state.students.find(x=>x.id===id);
-    if(b.dataset.act==='del'){ if(confirm('Padam pelajar ini?')){ try{await DB.deleteStudent(id);renderPelajar();fillClassDropdown();toast('Dipadam');}catch(e){toast('Ralat: '+e.message);} } }
-    if(b.dataset.act==='edit'){ row.innerHTML=`<input type="text" class="grow" data-f="name" value="${esc(s.name)}"><input type="text" data-f="nokp" value="${esc(s.nokp)}" style="max-width:130px"><input type="text" data-f="kelas" value="${esc(s.kelas||'')}" style="max-width:120px"><button class="icon-btn" data-act="save">Simpan</button><button class="icon-btn" data-act="cancel">Batal</button>`; }
-    if(b.dataset.act==='save'){ const patch={name:row.querySelector('[data-f=name]').value.trim(),nokp:row.querySelector('[data-f=nokp]').value.trim(),kelas:row.querySelector('[data-f=kelas]').value.trim()}; if(!patch.name||!patch.nokp)return; try{await DB.updateStudent(id,patch);renderPelajar();fillClassDropdown();toast('Dikemaskini');}catch(e){toast('Ralat: '+e.message);} }
-    if(b.dataset.act==='cancel') renderPelajar();
-  };
-}
-function download(n,c){const b=new Blob(['\uFEFF'+c],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=n;a.click();URL.revokeObjectURL(u);}
-function parseCSV(t){t=t.replace(/^\uFEFF/,'');const rows=[];let row=[],cur='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}else{if(c==='"')q=true;else if(c===','){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else if(c!=='\r')cur+=c;}}if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows.filter(r=>r.some(x=>x.trim()!==''));}
-async function importCSV(text){
-  try{
-    const rows=parseCSV(text); if(rows.length<2)throw new Error('Fail kosong');
-    const h=rows[0].map(x=>x.toLowerCase().replace(/[^a-z]/g,''));
-    const find=ks=>h.findIndex(x=>ks.includes(x));
-    const iN=find(['nama','name']),iK=find(['nokp','nokad','ic','no']),iC=find(['kelas','class']);
-    if(iN<0||iK<0)throw new Error('Lajur perlu: Nama, NoKP (Kelas pilihan)');
-    const batch=[];
-    for(let r=1;r<rows.length;r++){const c=rows[r];const name=(c[iN]||'').trim(),nokp=(c[iK]||'').trim(),kelas=(iC>=0?(c[iC]||'').trim():'');if(!name||!nokp)continue;batch.push({name,nokp,kelas});}
-    if(!batch.length)throw new Error('Tiada baris sah');
-    await DB.upsertStudentByNokp(batch);
-    renderPelajar(); fillClassDropdown(); toast(`${batch.length} pelajar diimport ✓`);
-  }catch(e){ toast('Ralat import: '+e.message); }
-}
-
 /* =================== NAV =================== */
 document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active');
   const k=tab.dataset.tab;
   $('#tab-ambil').classList.toggle('hidden',k!=='ambil');
   $('#tab-data').classList.toggle('hidden',k!=='data');
-  $('#tab-admin').classList.toggle('hidden',k!=='admin');
   $('#savebar').classList.toggle('hidden',k!=='ambil');
   if(k==='data')renderData();
-  if(k==='admin')renderGuru();
   if(k==='ambil'){fillClassDropdown();loadCurrent();}
 }));
-document.querySelector('.adm-nav').addEventListener('click',e=>{
-  const b=e.target.closest('[data-adm]'); if(!b)return;
-  document.querySelectorAll('.adm-nav button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
-  const k=b.dataset.adm;
-  $('#adm-guru').classList.toggle('hidden',k!=='guru');
-  $('#adm-pelajar').classList.toggle('hidden',k!=='pelajar');
-  if(k==='guru')renderGuru(); else renderPelajar();
-});
 
 if(sb) boot();
 </script>
