@@ -198,6 +198,7 @@ const $=s=>document.querySelector(s);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const esc=s=>(s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const EMAIL_DOMAIN='@kehadiran.local';
+const ADMIN_EMAIL='admin@kehadiran.local';
 const icToEmail=ic=>ic.replace(/\D/g,'')+EMAIL_DOMAIN;
 const emailToIc=em=>(em||'').split('@')[0];
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
@@ -240,11 +241,17 @@ const rosterFor=kelas=>state.students.filter(s=>s.kelas===kelas).sort((a,b)=>a.n
 async function boot(){
   if(!sb)return;
   const {data:{session}}=await sb.auth.getSession();
+  // Tolak sesi admin — admin guna admin.html, bukan sini
+  if(session && session.user.email===ADMIN_EMAIL){ await sb.auth.signOut(); showScreen('login'); return; }
   if(session) await afterLogin(); else showScreen('login');
 }
 function showScreen(name){
-  ['setup','login','setpw','app'].forEach(s=>$('#'+(s==='app'?'app':s+'-screen')).classList.add('hidden'));
-  $('#'+(name==='app'?'app':name+'-screen')).classList.remove('hidden');
+  const ids=['setup-screen','login-screen','setpw-screen','app'];
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el){el.style.display='none';el.classList.add('hidden');} });
+  const target=name==='app'?'app':name+'-screen';
+  const el=document.getElementById(target); 
+  if(el){ el.style.display=''; el.classList.remove('hidden'); }
+  window.scrollTo(0,0);
 }
 $('#lg-btn').onclick=async()=>{
   const ic=$('#lg-ic').value.trim(), pw=$('#lg-pw').value;
