@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Kehadiran Kelas Tambahan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f6f8;--surface:#fff;--ink:#1a2230;--muted:#6b7585;--line:#e6e9ef;
+    --brand:#2f5fe0;--brand-dark:#214bc0;--absent:#e0492f;--absent-soft:#fdece9;
+    --present:#1f9d6b;--radius:14px;--shadow:0 1px 2px rgba(20,30,50,.06),0 8px 24px rgba(20,30,50,.06);
+  }
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+    -webkit-font-smoothing:antialiased;line-height:1.45}
+  .wrap{max-width:780px;margin:0 auto;padding:0 16px 120px}
+  header.app{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+  .head-inner{max-width:780px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:12px}
+  .logo{width:38px;height:38px;border-radius:10px;background:var(--brand);display:grid;place-items:center;
+    color:#fff;font-weight:800;font-size:15px;flex:none}
+  .head-inner h1{font-size:16px;margin:0;font-weight:700;letter-spacing:-.01em}
+  .head-inner p{margin:0;font-size:12px;color:var(--muted)}
+  .tabs{display:flex;gap:4px;max-width:780px;margin:0 auto;padding:0 12px}
+  .tab{flex:1;padding:11px;border:0;background:none;font:inherit;font-weight:600;font-size:14px;
+    color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent}
+  .tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+
+  .context{display:flex;gap:10px;margin:16px 0 8px;flex-wrap:wrap}
+  .field{flex:1;min-width:140px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  select,input[type=date],input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;font:inherit;font-size:15px;background:var(--surface);color:var(--ink)}
+  select:focus,input:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:var(--brand)}
+
+  .summary{display:flex;gap:10px;margin:14px 0}
+  .stat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+  .stat .n{font-size:24px;font-weight:800;letter-spacing:-.02em}.stat .l{font-size:12px;color:var(--muted);font-weight:600}
+  .stat.absent .n{color:var(--absent)}.stat.present .n{color:var(--present)}
+  .hint{font-size:13px;color:var(--muted);margin:4px 2px 12px}
+
+  .roster{display:flex;flex-direction:column;gap:8px}
+  .student{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;
+    box-shadow:var(--shadow);transition:.12s}
+  .student.absent{border-color:var(--absent);background:#fff7f5}
+  .row{display:flex;align-items:center;gap:12px}
+  .num{width:26px;color:var(--muted);font-size:13px;font-weight:600;flex:none}
+  .who{flex:1;min-width:0}.who .name{font-weight:600}.who .meta{font-size:12px;color:var(--muted);font-weight:500}
+  .toggle{border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:700;
+    font-size:13px;padding:8px 14px;border-radius:999px;cursor:pointer;flex:none}
+  .student.absent .toggle{background:var(--absent);border-color:var(--absent);color:#fff}
+  .reasons{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;
+    font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+  .savebar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px;z-index:30}
+  .savebar .inner{max-width:780px;margin:0 auto;display:flex;gap:12px;align-items:center}
+  .save-info{flex:1;font-size:13px;color:var(--muted)}
+  .btn{border:0;border-radius:11px;padding:13px 22px;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:active{background:var(--brand-dark)}
+  .btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  /* Admin */
+  .adm-nav{display:flex;gap:6px;margin:16px 0 6px}
+  .adm-nav button{flex:1;padding:9px;border:1px solid var(--line);background:var(--surface);border-radius:10px;
+    font:inherit;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer}
+  .adm-nav button.active{background:var(--ink);border-color:var(--ink);color:#fff}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 10px;font-size:14px}
+  .addrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .addrow input,.addrow select{flex:1;min-width:120px}
+  .addrow .btn{padding:11px 16px;font-size:14px}
+  .item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .item:first-of-type{border-top:0}
+  .item .grow{flex:1;min-width:0}
+  .item .nm{font-weight:600}.item .sub{font-size:12px;color:var(--muted)}
+  .item select{max-width:200px}
+  .icon-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;
+    font-size:12px;padding:6px 11px;border-radius:8px;cursor:pointer}
+  .icon-btn.danger{color:var(--absent)}
+  .enroll-panel{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);max-height:240px;overflow:auto}
+  .enroll-item{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:14px}
+  .enroll-item input{width:18px;height:18px}
+
+  .rec-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .rec-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+  .rec-head .d{font-weight:700}.rec-head .c{font-size:13px;color:var(--muted)}
+  .rec-badge{font-size:12px;font-weight:700;color:var(--absent);background:var(--absent-soft);padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .rec-list{margin:0;padding:0;list-style:none;font-size:14px}
+  .rec-list li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+  .rec-list small{color:var(--muted);font-weight:500}
+  .rec-reason{color:var(--muted);font-size:13px;font-weight:600;white-space:nowrap}
+
+  .empty{text-align:center;color:var(--muted);padding:42px 16px;font-size:14px}
+  .empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+    padding:11px 20px;border-radius:999px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hidden{display:none}
+  .setup{max-width:560px;margin:60px auto;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+  .setup code{background:#f0f2f6;padding:2px 6px;border-radius:5px;font-size:13px}
+  .setup pre{background:#0f1726;color:#e6edf6;padding:14px;border-radius:10px;overflow:auto;font-size:12.5px}
+</style>
+</head>
+<body>
+
+<div id="setup-screen" class="setup hidden">
+  <h2>Sambung ke database dulu</h2>
+  <p>Buka fail <code>index.html</code>, cari bahagian <b>KONFIGURASI</b> di atas <code>&lt;script&gt;</code>, dan masukkan URL + anon key projek Supabase awak:</p>
+  <pre>const SUPABASE_URL  = "https://xxxx.supabase.co";
+const SUPABASE_ANON = "eyJhbGci...";</pre>
+  <p>Cara dapatkan: Supabase &rarr; Project Settings &rarr; API. Penuh langkah dalam <b>PANDUAN.md</b>.</p>
+</div>
+
+<div id="app" class="hidden">
+<header class="app">
+  <div class="head-inner">
+    <div class="logo">KT</div>
+    <div><h1>Sistem Kehadiran Kelas Tambahan</h1><p>SMK Batu Maung</p></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="ambil">Ambil Kehadiran</button>
+    <button class="tab" data-tab="rekod">Rekod</button>
+    <button class="tab" data-tab="admin">Admin</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== AMBIL ===== -->
+  <section id="tab-ambil">
+    <div class="context">
+      <div class="field"><label for="subjek">Subjek (Guru)</label><select id="subjek"></select></div>
+      <div class="field"><label for="tarikh">Tarikh</label><input type="date" id="tarikh"></div>
+    </div>
+    <div class="summary">
+      <div class="stat present"><div class="n" id="stat-hadir">0</div><div class="l">Hadir</div></div>
+      <div class="stat absent"><div class="n" id="stat-tidak">0</div><div class="l">Tidak Hadir</div></div>
+      <div class="stat"><div class="n" id="stat-jumlah">0</div><div class="l">Jumlah</div></div>
+    </div>
+    <p class="hint">Semua dikira <strong>hadir</strong> secara lalai. Tekan pelajar yang tiada, pilih sebab.</p>
+    <div class="roster" id="roster"></div>
+  </section>
+
+  <!-- ===== REKOD ===== -->
+  <section id="tab-rekod" class="hidden"><div id="rec-container"></div></section>
+
+  <!-- ===== ADMIN ===== -->
+  <section id="tab-admin" class="hidden">
+    <div class="adm-nav">
+      <button class="active" data-adm="guru">Guru</button>
+      <button data-adm="subjek">Subjek</button>
+      <button data-adm="pelajar">Pelajar</button>
+    </div>
+    <div id="adm-guru"></div>
+    <div id="adm-subjek" class="hidden"></div>
+    <div id="adm-pelajar" class="hidden"></div>
+  </section>
+
+</div>
+
+<div class="savebar" id="savebar">
+  <div class="inner">
+    <div class="save-info" id="save-info">Belum disimpan</div>
+    <button class="btn btn-primary" id="btn-simpan">Simpan Rekod</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ================= KONFIGURASI — ISI 2 BARIS INI ================= */
+const SUPABASE_URL  = "PASTE_SUPABASE_URL";
+const SUPABASE_ANON = "PASTE_SUPABASE_ANON_KEY";
+/* ================================================================= */
+
+const $ = s => document.querySelector(s);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtDate = iso => new Date(iso+'T00:00').toLocaleDateString('ms-MY',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+const esc = s => (s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
+
+if(SUPABASE_URL.includes('PASTE_')){ $('#setup-screen').classList.remove('hidden'); }
+else { $('#app').classList.remove('hidden'); boot(); }
+
+const sb = SUPABASE_URL.includes('PASTE_') ? null : supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+/* ===================================================================
+   DATA LAYER — semua sentuhan database di sini
+   =================================================================== */
+const DB = {
+  async teachers(){ const {data,error}=await sb.from('teachers').select('*').order('name'); if(error)throw error; return data; },
+  async addTeacher(name){ const {error}=await sb.from('teachers').insert({name}); if(error)throw error; },
+  async updateTeacher(id,name){ const {error}=await sb.from('teachers').update({name}).eq('id',id); if(error)throw error; },
+  async deleteTeacher(id){ const {error}=await sb.from('teachers').delete().eq('id',id); if(error)throw error; },
+
+  async subjects(){ const {data,error}=await sb.from('subjects').select('id,name,teacher_id,teachers(name)').order('name'); if(error)throw error; return data; },
+  async addSubject(name,teacher_id){ const {error}=await sb.from('subjects').insert({name,teacher_id:teacher_id||null}); if(error)throw error; },
+  async updateSubject(id,patch){ const {error}=await sb.from('subjects').update(patch).eq('id',id); if(error)throw error; },
+  async deleteSubject(id){ const {error}=await sb.from('subjects').delete().eq('id',id); if(error)throw error; },
+
+  async students(){ const {data,error}=await sb.from('students').select('*').order('name'); if(error)throw error; return data; },
+  async addStudent(s){ const {error}=await sb.from('students').insert(s); if(error)throw error; },
+  async updateStudent(id,patch){ const {error}=await sb.from('students').update(patch).eq('id',id); if(error)throw error; },
+  async deleteStudent(id){ const {error}=await sb.from('students').delete().eq('id',id); if(error)throw error; },
+  async upsertStudentByNokp(s){ const {data,error}=await sb.from('students').upsert(s,{onConflict:'nokp'}).select().single(); if(error)throw error; return data; },
+
+  async roster(subjectId){
+    const {data,error}=await sb.from('enrollments').select('students(id,nokp,name,kelas)').eq('subject_id',subjectId);
+    if(error)throw error; return data.map(r=>r.students).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));
+  },
+  async enrolledIds(subjectId){ const {data,error}=await sb.from('enrollments').select('student_id').eq('subject_id',subjectId); if(error)throw error; return new Set(data.map(d=>d.student_id)); },
+  async enroll(student_id,subject_id){ const {error}=await sb.from('enrollments').insert({student_id,subject_id}); if(error && error.code!=='23505')throw error; },
+  async unenroll(student_id,subject_id){ const {error}=await sb.from('enrollments').delete().eq('student_id',student_id).eq('subject_id',subject_id); if(error)throw error; },
+
+  async getSession(subjectId,date){
+    const {data,error}=await sb.from('attendance_sessions').select('id,absentees(student_id,reason)').eq('subject_id',subjectId).eq('date',date).maybeSingle();
+    if(error)throw error; return data;
+  },
+  async saveSession(subjectId,date,absent){
+    const {data:sess,error:e1}=await sb.from('attendance_sessions').upsert({subject_id:subjectId,date},{onConflict:'subject_id,date'}).select('id').single();
+    if(e1)throw e1;
+    const {error:e2}=await sb.from('absentees').delete().eq('session_id',sess.id); if(e2)throw e2;
+    if(absent.length){ const {error:e3}=await sb.from('absentees').insert(absent.map(a=>({session_id:sess.id,student_id:a.student_id,reason:a.reason}))); if(e3)throw e3; }
+  },
+  async recentSessions(){
+    const {data,error}=await sb.from('attendance_sessions')
+      .select('id,date,subjects(name,teachers(name)),absentees(reason,students(name,kelas))')
+      .order('date',{ascending:false}).limit(60);
+    if(error)throw error; return data;
+  }
+};
+
+const REASONS=['Sakit','Kebenaran','Tanpa Sebab','Lain-lain'];
+const cache={teachers:[],subjects:[],students:[]};
+const current={subjectId:null,date:null,roster:[],absent:{}}; // absent={student_id:reason}
+
+async function refreshCaches(){
+  [cache.teachers,cache.subjects,cache.students]=await Promise.all([DB.teachers(),DB.subjects(),DB.students()]);
+}
+
+/* ===================================================================
+   AMBIL KEHADIRAN
+   =================================================================== */
+function fillSubjectDropdown(){
+  $('#subjek').innerHTML = cache.subjects.length
+    ? cache.subjects.map(s=>`<option value="${s.id}">${esc(s.name)}${s.teachers?` — ${esc(s.teachers.name)}`:''}</option>`).join('')
+    : '<option value="">(Tiada subjek — tambah di Admin)</option>';
+}
+
+async function loadCurrent(){
+  current.subjectId=$('#subjek').value||null;
+  current.date=$('#tarikh').value;
+  current.absent={};
+  if(!current.subjectId){ current.roster=[]; renderRoster(); updateSaveInfo(null); return; }
+  try{
+    const [roster,sess]=await Promise.all([DB.roster(current.subjectId),DB.getSession(current.subjectId,current.date)]);
+    current.roster=roster;
+    if(sess) sess.absentees.forEach(a=>current.absent[a.student_id]=a.reason);
+    renderRoster(); updateSaveInfo(sess);
+  }catch(e){ toast('Ralat memuat: '+e.message); }
+}
+
+function renderRoster(){
+  $('#roster').innerHTML = current.roster.map((s,i)=>{
+    const ab=current.absent[s.id]!==undefined, rs=current.absent[s.id];
+    return `<div class="student ${ab?'absent':''}" data-id="${s.id}">
+      <div class="row"><span class="num">${i+1}.</span>
+        <span class="who"><span class="name">${esc(s.name)}</span><br><span class="meta">${esc(s.nokp)} · ${esc(s.kelas||'-')}</span></span>
+        <button class="toggle" data-act="toggle">${ab?'Tidak Hadir':'Hadir'}</button></div>
+      ${ab?`<div class="reasons">${REASONS.map(r=>`<button class="chip ${rs===r?'on':''}" data-act="reason" data-r="${r}">${r}</button>`).join('')}</div>`:''}
+    </div>`;
+  }).join('') || `<div class="empty"><strong>Tiada pelajar</strong>Subjek ini belum ada pelajar berdaftar. Tambah di tab Admin.</div>`;
+  const total=current.roster.length, tidak=Object.keys(current.absent).length;
+  $('#stat-jumlah').textContent=total; $('#stat-tidak').textContent=tidak; $('#stat-hadir').textContent=total-tidak;
+}
+function updateSaveInfo(sess){ $('#save-info').textContent = sess?'Sudah ada rekod tersimpan untuk tarikh ini':'Belum disimpan'; }
+
+$('#roster').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b)return;
+  const id=e.target.closest('.student').dataset.id;
+  if(b.dataset.act==='toggle'){ current.absent[id]!==undefined?delete current.absent[id]:current.absent[id]='Tanpa Sebab'; renderRoster(); }
+  if(b.dataset.act==='reason'){ current.absent[id]=b.dataset.r; renderRoster(); }
+});
+$('#subjek').addEventListener('change',loadCurrent);
+$('#tarikh').addEventListener('change',loadCurrent);
+$('#btn-simpan').addEventListener('click',async()=>{
+  if(!current.subjectId){ toast('Tiada subjek dipilih'); return; }
+  const btn=$('#btn-simpan'); btn.disabled=true;
+  try{
+    const absent=Object.entries(current.absent).map(([student_id,reason])=>({student_id,reason}));
+    await DB.saveSession(current.subjectId,current.date,absent);
+    updateSaveInfo({}); toast('Rekod disimpan ✓');
+  }catch(e){ toast('Ralat simpan: '+e.message); }
+  btn.disabled=false;
+});
+
+/* ===================================================================
+   REKOD
+   =================================================================== */
+async function renderRecords(){
+  const box=$('#rec-container'); box.innerHTML='<div class="empty">Memuat…</div>';
+  try{
+    const recs=await DB.recentSessions();
+    if(!recs.length){ box.innerHTML='<div class="empty"><strong>Tiada rekod lagi</strong>Rekod yang disimpan akan muncul di sini.</div>'; return; }
+    box.innerHTML=recs.map(r=>{
+      const subj=r.subjects?.name||'(subjek dipadam)', guru=r.subjects?.teachers?.name;
+      const ab=r.absentees||[];
+      return `<div class="rec-card">
+        <div class="rec-head"><div><span class="d">${esc(subj)}</span> · <span class="c">${fmtDate(r.date)}${guru?` · ${esc(guru)}`:''}</span></div>
+          <span class="rec-badge">${ab.length} tidak hadir</span></div>
+        ${ab.length?`<ul class="rec-list">${ab.map(a=>`<li><span>${esc(a.students?.name||'-')} <small>${esc(a.students?.kelas||'')}</small></span><span class="rec-reason">${esc(a.reason)}</span></li>`).join('')}</ul>`:'<p class="rec-reason" style="margin:4px 0">Semua pelajar hadir.</p>'}
+      </div>`;
+    }).join('');
+  }catch(e){ box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>'; }
+}
+
+/* ===================================================================
+   ADMIN — GURU
+   =================================================================== */
+async function renderGuru(){
+  await refreshCaches();
+  $('#adm-guru').innerHTML=`<div class="card"><h3>Senarai Guru</h3>
+    <div class="addrow"><input type="text" id="g-name" placeholder="Nama guru baharu"><button class="btn btn-primary" id="g-add">Tambah</button></div>
+    <div id="g-list">${cache.teachers.map(t=>`
+      <div class="item" data-id="${t.id}">
+        <span class="grow nm">${esc(t.name)}</span>
+        <button class="icon-btn" data-act="edit">Edit</button>
+        <button class="icon-btn danger" data-act="del">Padam</button>
+      </div>`).join('')||'<div class="sub">Tiada guru lagi.</div>'}</div></div>`;
+  $('#g-add').onclick=async()=>{ const n=$('#g-name').value.trim(); if(!n)return; try{await DB.addTeacher(n);renderGuru();toast('Guru ditambah');}catch(e){toast('Ralat: '+e.message);} };
+  $('#g-list').onclick=async e=>{
+    const b=e.target.closest('[data-act]'); if(!b)return;
+    const row=e.target.closest('.item'), id=row.dataset.id, name=row.querySelector('.nm')?.textContent;
+    if(b.dataset.act==='del'){ if(confirm('Padam guru ini? Subjek yang dipegangnya akan jadi tanpa guru.')){ try{await DB.deleteTeacher(id);renderGuru();toast('Dipadam');}catch(e){toast('Ralat: '+e.message);} } }
+    if(b.dataset.act==='edit'){
+      row.innerHTML=`<input type="text" class="grow" value="${esc(name)}"><button class="icon-btn" data-act="save">Simpan</button><button class="icon-btn" data-act="cancel">Batal</button>`;
+      row.querySelector('input').focus();
+    }
+    if(b.dataset.act==='save'){ const v=row.querySelector('input').value.trim(); if(!v)return; try{await DB.updateTeacher(id,v);renderGuru();toast('Dikemaskini');}catch(e){toast('Ralat: '+e.message);} }
+    if(b.dataset.act==='cancel') renderGuru();
+  };
+}
+
+/* ===================================================================
+   ADMIN — SUBJEK (+ urus pelajar / enrollment)
+   =================================================================== */
+async function renderSubjek(){
+  await refreshCaches();
+  const teacherOpts=id=>`<option value="">(Tiada guru)</option>`+cache.teachers.map(t=>`<option value="${t.id}" ${t.id===id?'selected':''}>${esc(t.name)}</option>`).join('');
+  $('#adm-subjek').innerHTML=`<div class="card"><h3>Subjek Kelas Tambahan</h3>
+    <div class="addrow"><input type="text" id="s-name" placeholder="Nama subjek"><select id="s-teacher">${teacherOpts(null)}</select><button class="btn btn-primary" id="s-add">Tambah</button></div>
+    <div id="s-list">${cache.subjects.map(s=>`
+      <div class="item" data-id="${s.id}" style="flex-wrap:wrap">
+        <span class="grow nm">${esc(s.name)}</span>
+        <select data-act="setguru">${teacherOpts(s.teacher_id)}</select>
+        <button class="icon-btn" data-act="enroll">Urus Pelajar</button>
+        <button class="icon-btn" data-act="rename">Nama</button>
+        <button class="icon-btn danger" data-act="del">Padam</button>
+        <div class="enroll-panel hidden" data-panel></div>
+      </div>`).join('')||'<div class="sub">Tiada subjek lagi.</div>'}</div></div>`;
+
+  $('#s-add').onclick=async()=>{ const n=$('#s-name').value.trim(); if(!n)return; try{await DB.addSubject(n,$('#s-teacher').value);renderSubjek();toast('Subjek ditambah');}catch(e){toast('Ralat: '+e.message);} };
+
+  $('#s-list').onclick=async e=>{
+    const b=e.target.closest('[data-act]'); if(!b||b.tagName==='SELECT')return;
+    const row=e.target.closest('.item'), id=row.dataset.id;
+    if(b.dataset.act==='del'){ if(confirm('Padam subjek ini? Semua pendaftaran & rekod kehadirannya akan dipadam.')){ try{await DB.deleteSubject(id);renderSubjek();toast('Dipadam');}catch(e){toast('Ralat: '+e.message);} } }
+    if(b.dataset.act==='rename'){ const v=prompt('Nama subjek baharu:',row.querySelector('.nm').textContent); if(v&&v.trim()){ try{await DB.updateSubject(id,{name:v.trim()});renderSubjek();toast('Dikemaskini');}catch(e){toast('Ralat: '+e.message);} } }
+    if(b.dataset.act==='enroll'){ toggleEnrollPanel(row,id); }
+  };
+  $('#s-list').addEventListener('change',async e=>{
+    if(e.target.dataset.act!=='setguru')return;
+    const id=e.target.closest('.item').dataset.id;
+    try{ await DB.updateSubject(id,{teacher_id:e.target.value||null}); toast('Guru dikemaskini'); }catch(err){toast('Ralat: '+err.message);}
+  });
+}
+
+async function toggleEnrollPanel(row,subjectId){
+  const panel=row.querySelector('[data-panel]');
+  if(!panel.classList.contains('hidden')){ panel.classList.add('hidden'); panel.innerHTML=''; return; }
+  panel.classList.remove('hidden'); panel.innerHTML='Memuat…';
+  try{
+    const enrolled=await DB.enrolledIds(subjectId);
+    panel.innerHTML = cache.students.length ? cache.students.map(s=>`
+      <label class="enroll-item"><input type="checkbox" data-sid="${s.id}" ${enrolled.has(s.id)?'checked':''}>
+      <span>${esc(s.name)} <small style="color:var(--muted)">${esc(s.kelas||'')}</small></span></label>`).join('')
+      : '<div class="sub">Tiada pelajar. Tambah dulu di tab Pelajar.</div>';
+    panel.onchange=async e=>{
+      const cb=e.target; const sid=cb.dataset.sid;
+      try{ cb.checked? await DB.enroll(sid,subjectId) : await DB.unenroll(sid,subjectId); }
+      catch(err){ toast('Ralat: '+err.message); cb.checked=!cb.checked; }
+    };
+  }catch(e){ panel.innerHTML='Ralat: '+esc(e.message); }
+}
+
+/* ===================================================================
+   ADMIN — PELAJAR (+ import CSV)
+   =================================================================== */
+async function renderPelajar(){
+  await refreshCaches();
+  $('#adm-pelajar').innerHTML=`<div class="card"><h3>Pelajar</h3>
+    <div class="addrow"><input type="text" id="p-nama" placeholder="Nama"><input type="text" id="p-nokp" placeholder="NoKP"><input type="text" id="p-kelas" placeholder="Kelas"><button class="btn btn-primary" id="p-add">Tambah</button></div>
+    <div class="addrow"><button class="btn btn-ghost" id="p-import">Import CSV</button><button class="btn btn-ghost" id="p-templat">Templat CSV</button><input type="file" id="p-file" accept=".csv" hidden></div>
+    <div id="p-list">${cache.students.map(s=>`
+      <div class="item" data-id="${s.id}">
+        <span class="grow"><span class="nm">${esc(s.name)}</span><br><span class="sub">${esc(s.nokp)} · ${esc(s.kelas||'-')}</span></span>
+        <button class="icon-btn" data-act="edit">Edit</button>
+        <button class="icon-btn danger" data-act="del">Padam</button>
+      </div>`).join('')||'<div class="sub">Tiada pelajar lagi.</div>'}</div></div>`;
+
+  $('#p-add').onclick=async()=>{
+    const nama=$('#p-nama').value.trim(),nokp=$('#p-nokp').value.trim(),kelas=$('#p-kelas').value.trim();
+    if(!nama||!nokp){ toast('Nama & NoKP wajib'); return; }
+    try{ await DB.addStudent({name:nama,nokp,kelas}); renderPelajar(); toast('Pelajar ditambah'); }catch(e){ toast('Ralat: '+(e.code==='23505'?'NoKP sudah wujud':e.message)); }
+  };
+  $('#p-templat').onclick=()=>download('templat_pelajar.csv','Nama,NoKP,Kelas,Subjek\nAhmad Danial,080101071111,5 Amanah,Matematik Tambahan\nNur Aisyah,080203072222,5 Amanah,Fizik');
+  $('#p-import').onclick=()=>$('#p-file').click();
+  $('#p-file').onchange=e=>{ const f=e.target.files[0]; if(!f)return; const rd=new FileReader(); rd.onload=()=>importCSV(rd.result); rd.readAsText(f,'UTF-8'); e.target.value=''; };
+
+  $('#p-list').onclick=async e=>{
+    const b=e.target.closest('[data-act]'); if(!b)return;
+    const row=e.target.closest('.item'), id=row.dataset.id, s=cache.students.find(x=>x.id===id);
+    if(b.dataset.act==='del'){ if(confirm('Padam pelajar ini? Pendaftaran & rekod kehadirannya akan dipadam.')){ try{await DB.deleteStudent(id);renderPelajar();toast('Dipadam');}catch(e){toast('Ralat: '+e.message);} } }
+    if(b.dataset.act==='edit'){
+      row.innerHTML=`<input type="text" class="grow" data-f="name" value="${esc(s.name)}"><input type="text" data-f="nokp" value="${esc(s.nokp)}" style="max-width:130px"><input type="text" data-f="kelas" value="${esc(s.kelas||'')}" style="max-width:110px"><button class="icon-btn" data-act="save">Simpan</button><button class="icon-btn" data-act="cancel">Batal</button>`;
+    }
+    if(b.dataset.act==='save'){
+      const patch={name:row.querySelector('[data-f=name]').value.trim(),nokp:row.querySelector('[data-f=nokp]').value.trim(),kelas:row.querySelector('[data-f=kelas]').value.trim()};
+      if(!patch.name||!patch.nokp)return; try{await DB.updateStudent(id,patch);renderPelajar();toast('Dikemaskini');}catch(e){toast('Ralat: '+e.message);}
+    }
+    if(b.dataset.act==='cancel') renderPelajar();
+  };
+}
+
+function download(name,content){ const b=new Blob(['\uFEFF'+content],{type:'text/csv;charset=utf-8'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u); }
+
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,''); const rows=[]; let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){ const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else{ if(ch==='"')q=true; else if(ch===','){row.push(cur);cur='';} else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur='';} else if(ch!=='\r')cur+=ch; } }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows.filter(r=>r.some(c=>c.trim()!==''));
+}
+
+async function importCSV(text){
+  try{
+    const rows=parseCSV(text); if(rows.length<2)throw new Error('Fail kosong');
+    const h=rows[0].map(x=>x.toLowerCase().replace(/[^a-z]/g,''));
+    const find=ks=>h.findIndex(x=>ks.includes(x));
+    const iN=find(['nama','name']),iK=find(['nokp','nokad','ic','no']),iC=find(['kelas','class']),iS=find(['subjek','subject','matapelajaran']);
+    if(iN<0||iK<0||iS<0)throw new Error('Lajur perlu: Nama, NoKP, Subjek (Kelas pilihan)');
+    await refreshCaches();
+    const subjByName=new Map(cache.subjects.map(s=>[s.name.toLowerCase(),s.id]));
+    let nStud=0,nEnr=0;
+    for(let r=1;r<rows.length;r++){
+      const c=rows[r], nama=(c[iN]||'').trim(), nokp=(c[iK]||'').trim(), kelas=(iC>=0?(c[iC]||'').trim():''), subjek=(c[iS]||'').trim();
+      if(!nama||!nokp||!subjek)continue;
+      const stud=await DB.upsertStudentByNokp({name:nama,nokp,kelas}); nStud++;
+      let sid=subjByName.get(subjek.toLowerCase());
+      if(!sid){ await DB.addSubject(subjek,null); const fresh=await DB.subjects(); cache.subjects=fresh; const found=fresh.find(s=>s.name.toLowerCase()===subjek.toLowerCase()); sid=found?.id; subjByName.set(subjek.toLowerCase(),sid); }
+      if(sid){ await DB.enroll(stud.id,sid); nEnr++; }
+    }
+    renderPelajar(); fillSubjectDropdown();
+    toast(`Import siap: ${nStud} pelajar, ${nEnr} pendaftaran ✓`);
+  }catch(e){ toast('Ralat import: '+e.message); }
+}
+
+/* ===================================================================
+   NAV
+   =================================================================== */
+document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); tab.classList.add('active');
+  const k=tab.dataset.tab;
+  $('#tab-ambil').classList.toggle('hidden',k!=='ambil');
+  $('#tab-rekod').classList.toggle('hidden',k!=='rekod');
+  $('#tab-admin').classList.toggle('hidden',k!=='admin');
+  $('#savebar').classList.toggle('hidden',k!=='ambil');
+  if(k==='rekod') renderRecords();
+  if(k==='admin') renderGuru();
+  if(k==='ambil'){ fillSubjectDropdown(); loadCurrent(); }
+}));
+document.querySelector('.adm-nav').addEventListener('click',e=>{
+  const b=e.target.closest('[data-adm]'); if(!b)return;
+  document.querySelectorAll('.adm-nav button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  const k=b.dataset.adm;
+  $('#adm-guru').classList.toggle('hidden',k!=='guru');
+  $('#adm-subjek').classList.toggle('hidden',k!=='subjek');
+  $('#adm-pelajar').classList.toggle('hidden',k!=='pelajar');
+  if(k==='guru')renderGuru(); if(k==='subjek')renderSubjek(); if(k==='pelajar')renderPelajar();
+});
+
+/* ===================================================================
+   BOOT
+   =================================================================== */
+async function boot(){
+  $('#tarikh').value=todayISO();
+  try{ await refreshCaches(); fillSubjectDropdown(); await loadCurrent(); }
+  catch(e){ toast('Gagal sambung database: '+e.message); }
+}
+</script>
+</body>
+</html>
