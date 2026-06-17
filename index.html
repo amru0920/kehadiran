@@ -272,7 +272,7 @@ const myClasses=()=>state.teacher?.class_name?[state.teacher.class_name]:classes
 function periodRange(p){const t=new Date();const to=todayISO();
   if(p==='minggu'){const f=new Date(t);f.setDate(t.getDate()-6);return[f.toISOString().slice(0,10),to];}
   if(p==='bulan')return[`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-01`,to];
-  return['0000-01-01','9999-12-31'];}
+  return[null,null];}   // Semua = tiada had tarikh
 const dataPeriod=()=>document.querySelector('#dt-seg button.active')?.dataset.p||'bulan';
 function getSubjek(){
   const v=$('#subjek').value;
