@@ -99,23 +99,8 @@
     <p>Sistem Kehadiran Kelas Tambahan · SMK Batu Maung</p>
     <label>No. Kad Pengenalan</label>
     <input type="text" id="lg-ic" inputmode="numeric" placeholder="cth: 900101071234" autocomplete="username">
-    <label>Kata Laluan</label>
-    <input type="password" id="lg-pw" placeholder="Kali pertama: 4 digit akhir IC" autocomplete="current-password">
     <button class="btn btn-primary" id="lg-btn" style="width:100%;margin-top:18px">Log Masuk</button>
-    <div class="auth-note">Kali pertama, guna <b>4 digit akhir IC</b> sebagai kata laluan.</div>
-  </div>
-</div>
-
-<div id="setpw-screen" class="auth-screen hidden">
-  <div class="auth-card">
-    <div class="logo">KT</div>
-    <h2>Tetapkan Kata Laluan</h2>
-    <p>Sila tukar kata laluan default anda.</p>
-    <label>Kata Laluan Baharu (min 6 aksara)</label>
-    <input type="password" id="sp-pw" autocomplete="new-password">
-    <label>Sahkan Kata Laluan</label>
-    <input type="password" id="sp-pw2" autocomplete="new-password">
-    <button class="btn btn-primary" id="sp-btn" style="width:100%;margin-top:18px">Simpan & Teruskan</button>
+    <div class="auth-note">Log masuk menggunakan <b>No. Kad Pengenalan</b> anda.</div>
   </div>
 </div>
 
@@ -260,7 +245,7 @@ function getSubjek(){
 
 /* ===== AUTH ===== */
 function showScreen(name){
-  ['login-screen','setpw-screen','app'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('hidden');});
+  ['login-screen','app'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('hidden');});
   const el=document.getElementById(name==='app'?'app':name+'-screen');
   if(el){el.classList.remove('hidden');window.scrollTo(0,0);}
 }
@@ -270,38 +255,26 @@ async function boot(){
   if(session) await afterLogin(); else showScreen('login');
 }
 $('#lg-btn').onclick=async()=>{
-  const ic=$('#lg-ic').value.trim(),pw=$('#lg-pw').value;
-  if(!ic||!pw){toast('Isi IC & kata laluan');return;}
+  const ic=$('#lg-ic').value.replace(/\D/g,'');
+  if(ic.length<4){toast('Masukkan No. KP penuh');return;}
+  const pw=ic.slice(-4);            // kata laluan tetap = 4 digit akhir IC
   $('#lg-btn').disabled=true;
   const{error}=await sb.auth.signInWithPassword({email:icToEmail(ic),password:pw});
   $('#lg-btn').disabled=false;
-  if(error){toast('IC atau kata laluan salah');return;}
+  if(error){toast('No. KP tidak sah atau akaun belum dicipta');return;}
   await afterLogin();
 };
-$('#lg-pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#lg-btn').click();});
+$('#lg-ic').addEventListener('keydown',e=>{if(e.key==='Enter')$('#lg-btn').click();});
 async function afterLogin(){
   const{data:{user}}=await sb.auth.getUser();
   const ic=emailToIc(user.email);
   let t=null;try{t=await DB.myTeacher(ic);}catch(e){}
-  if(t&&t.password_set===false){showScreen('setpw');return;}
   state.teacher=t||{ic,name:ic,is_admin:false};
   // Sembunyikan pautan Admin kalau bukan admin
   if(!state.teacher.is_admin) $('#lnk-admin').classList.add('hidden');
   await enterApp();
 }
-$('#sp-btn').onclick=async()=>{
-  const pw=$('#sp-pw').value,pw2=$('#sp-pw2').value;
-  if(pw.length<6){toast('Minimum 6 aksara');return;}
-  if(pw!==pw2){toast('Kata laluan tak sama');return;}
-  $('#sp-btn').disabled=true;
-  const{error}=await sb.auth.updateUser({password:pw});
-  if(error){toast('Ralat: '+error.message);$('#sp-btn').disabled=false;return;}
-  const{data:{user}}=await sb.auth.getUser();
-  try{await DB.setPasswordFlag(emailToIc(user.email));}catch(e){}
-  $('#sp-btn').disabled=false;toast('Kata laluan ditetapkan ✓');
-  await afterLogin();
-};
-$('#btn-logout').onclick=async()=>{await sb.auth.signOut();state.teacher=null;showScreen('login');$('#lg-pw').value='';};
+$('#btn-logout').onclick=async()=>{await sb.auth.signOut();state.teacher=null;showScreen('login');$('#lg-ic').value='';};
 
 // Klik Admin — check is_admin dulu
 $('#lnk-admin').addEventListener('click',e=>{
