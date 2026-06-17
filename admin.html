@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin · Kehadiran Kelas Tambahan</title>
+<meta property="og:title" content="Admin · Kehadiran Kelas Tambahan">
+<meta property="og:description" content="SMK Batu Maung — rekod kehadiran pelajar, laporan & analisis kekerapan tidak hadir.">
+<meta property="og:image" content="https://kehadiran-f2u.pages.dev/og.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kehadiran-f2u.pages.dev/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Admin · Kehadiran Kelas Tambahan">
+<meta name="twitter:image" content="https://kehadiran-f2u.pages.dev/og.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -77,13 +86,15 @@
   .drill th{text-align:left;padding:7px 8px;color:var(--muted);font-size:11px;font-weight:700}
   .drill td{padding:7px 8px;border-top:1px solid var(--line)}
   .drill tr.rep td{background:#fff5f3}
+  .logo{object-fit:cover;overflow:hidden}
+  img.logo{background:#fff}
 </style>
 </head>
 <body>
 
 <div id="login-screen" class="auth-screen">
   <div class="auth-card">
-    <div class="logo">🔒</div>
+    <img class="logo" src="logo.jpg" alt="SMK Batu Maung">
     <h2>Panel Admin</h2>
     <p>Sistem Kehadiran Kelas Tambahan · SMK Batu Maung</p>
     <label for="adm-pw">Kata Laluan Admin</label>
@@ -95,7 +106,7 @@
 <div id="app" class="hidden">
 <header class="app">
   <div class="head-inner">
-    <div class="logo">A</div>
+    <img class="logo" src="logo.jpg" alt="SMK Batu Maung">
     <div><h1>Panel Admin</h1><p>Kehadiran Kelas Tambahan</p></div>
     <div class="sp"></div>
     <a href="index.html" class="logout" style="text-decoration:none;margin-right:6px">App Guru</a>
