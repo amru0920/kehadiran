@@ -97,9 +97,10 @@
     <img class="logo" src="logo.jpg" alt="SMK Batu Maung">
     <h2>Panel Admin</h2>
     <p>Sistem Kehadiran Kelas Tambahan · SMK Batu Maung</p>
-    <label for="adm-pw">Kata Laluan Admin</label>
-    <input type="password" id="adm-pw" autocomplete="current-password" placeholder="••••••••">
+    <label for="adm-ic">No. Kad Pengenalan</label>
+    <input type="text" id="adm-ic" inputmode="numeric" placeholder="cth: 900101071234" autocomplete="username">
     <button class="btn btn-primary" id="adm-login" style="width:100%;margin-top:18px;padding:13px">Log Masuk</button>
+    <div style="font-size:12px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.5">Hanya guru yang dibenarkan akses admin boleh log masuk di sini.</div>
   </div>
 </div>
 
@@ -153,17 +154,34 @@ async function callFn(body){
   return out;
 }
 
-/* ===== AUTH ===== */
-async function boot(){ const {data:{session}}=await sb.auth.getSession(); if(session) enterApp(); }
+/* ===== AUTH (IC + semak is_admin) ===== */
+let adminName='Admin';
+async function isCallerAdmin(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user) return false;
+  const ic=(user.email||'').split('@')[0];
+  const {data:t}=await sb.from('teachers').select('is_admin,name').eq('ic',ic).maybeSingle();
+  if(t&&t.is_admin){ adminName=t.name||'Admin'; return true; }
+  return false;
+}
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(session && await isCallerAdmin()) enterApp();
+}
 $('#adm-login').onclick=async()=>{
-  const pw=$('#adm-pw').value; if(!pw){toast('Masukkan kata laluan');return;}
+  const ic=$('#adm-ic').value.replace(/\D/g,'');
+  if(ic.length<4){toast('Masukkan No. KP penuh');return;}
   $('#adm-login').disabled=true;
-  const {error}=await sb.auth.signInWithPassword({email:ADMIN_EMAIL,password:pw});
-  $('#adm-login').disabled=false;
-  if(error){toast('Kata laluan salah');return;}
-  enterApp();
+  const {error}=await sb.auth.signInWithPassword({email:ic+'@kehadiran.local',password:ic.slice(-4)});
+  if(error){$('#adm-login').disabled=false;toast('No. KP tidak sah atau akaun belum dicipta');return;}
+  if(!(await isCallerAdmin())){
+    await sb.auth.signOut(); $('#adm-login').disabled=false;
+    alert('⚠️ Akaun ini tiada akses Admin.\nHubungi pentadbir untuk dibenarkan.');
+    return;
+  }
+  $('#adm-login').disabled=false; enterApp();
 };
-$('#adm-pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#adm-login').click();});
+$('#adm-ic').addEventListener('keydown',e=>{if(e.key==='Enter')$('#adm-login').click();});
 $('#btn-logout').onclick=async()=>{await sb.auth.signOut();location.reload();};
 function enterApp(){ const ls=$('#login-screen'); ls.style.display='none'; ls.classList.add('hidden'); $('#app').classList.remove('hidden'); window.scrollTo(0,0); renderGuru(); }
 
@@ -180,8 +198,9 @@ async function renderGuru(){
     <div class="addrow"><button class="btn btn-ghost" id="g-import">Import Guru (CSV)</button><button class="btn btn-ghost" id="g-templat">Templat CSV</button><input type="file" id="g-file" accept=".csv" hidden></div>
     <div id="g-tip" class="acct-tip hidden"></div>
     <div id="g-list" style="margin-top:6px">${list.map(t=>`<div class="item" data-ic="${esc(t.ic)}" data-id="${t.id}">
-      <span class="grow"><span class="nm">${esc(t.name)}</span><br><span class="sub">${esc(t.ic)} · ${esc(t.class_name||'tiada kelas')} · ${t.password_set?'PW ditetapkan':'guna default'}</span></span>
+      <span class="grow"><span class="nm">${esc(t.name)} ${t.is_admin?'<span class="pill g" style="font-size:10px">ADMIN</span>':''}</span><br><span class="sub">${esc(t.ic)} · ${esc(t.class_name||'tiada kelas')}</span></span>
       <select data-act="setclass">${clsOpts(t.class_name)}</select>
+      <button class="icon-btn" data-act="admin" style="${t.is_admin?'background:var(--ink);color:#fff;border-color:var(--ink)':''}">Admin</button>
       <button class="icon-btn" data-act="reset">Reset PW</button>
       <button class="icon-btn danger" data-act="del">Padam</button></div>`).join('')||'<div class="sub">Tiada guru.</div>'}</div></div>`;
 
@@ -191,7 +210,7 @@ async function renderGuru(){
     $('#g-add').disabled=true;
     try{ const r=await callFn({action:'create',ic,name,class_name:cn});
       $('#g-tip').classList.remove('hidden');
-      $('#g-tip').innerHTML=`✅ Akaun dicipta. Beritahu guru:<br>No. KP: <code>${esc(ic)}</code><br>Kata laluan sementara: <code>${esc(r.default_password)}</code> (4 digit akhir IC)<br>Sistem akan paksa tukar masa log masuk pertama.`;
+      $('#g-tip').innerHTML=`✅ Akaun dicipta. Beritahu guru:<br>No. KP: <code>${esc(ic)}</code><br>Kata laluan sementara: <code>${esc(r.default_password)}</code> (4 digit akhir IC)<br>Login terus guna No. KP + 4 digit akhir IC.`;
       renderGuru(); toast('Guru + akaun dicipta ✓');
     }catch(e){ toast('Ralat: '+e.message); }
     $('#g-add').disabled=false;
@@ -204,6 +223,7 @@ async function renderGuru(){
     const row=e.target.closest('.item'), ic=row.dataset.ic;
     if(b.dataset.act==='del'){ if(confirm('Padam guru ini + akaun loginnya?')){ try{await callFn({action:'delete',ic});renderGuru();toast('Dipadam');}catch(e){toast('Ralat: '+e.message);} } }
     if(b.dataset.act==='reset'){ if(confirm('Reset kata laluan kepada 4 digit akhir IC?')){ try{const r=await callFn({action:'reset',ic});toast('Reset ✓ — PW sementara: '+r.default_password);renderGuru();}catch(e){toast('Ralat: '+e.message);} } }
+    if(b.dataset.act==='admin'){ const id=row.dataset.id; const turnOn=!b.style.background; try{const {error}=await sb.from('teachers').update({is_admin:turnOn}).eq('id',id); if(error)throw error; toast(turnOn?'Diberi akses admin ✓':'Akses admin ditarik'); renderGuru();}catch(e){toast('Ralat: '+e.message);} }
   };
   $('#g-list').addEventListener('change',async e=>{
     if(e.target.dataset.act!=='setclass')return;
