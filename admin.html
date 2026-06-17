@@ -161,6 +161,7 @@ async function renderGuru(){
   const clsOpts=v=>'<option value="">(Tiada kelas)</option>'+cls.map(c=>`<option value="${esc(c)}" ${c===v?'selected':''}>${esc(c)}</option>`).join('');
   $('#tab-guru').innerHTML=`<div class="card"><h3>Guru</h3>
     <div class="addrow"><input type="text" id="g-name" placeholder="Nama"><input type="text" id="g-ic" placeholder="No. KP (12 digit)" inputmode="numeric"><select id="g-class">${clsOpts()}</select><button class="btn btn-primary" id="g-add">Tambah + Cipta Akaun</button></div>
+    <div class="addrow"><button class="btn btn-ghost" id="g-import">Import Guru (CSV)</button><button class="btn btn-ghost" id="g-templat">Templat CSV</button><input type="file" id="g-file" accept=".csv" hidden></div>
     <div id="g-tip" class="acct-tip hidden"></div>
     <div id="g-list" style="margin-top:6px">${list.map(t=>`<div class="item" data-ic="${esc(t.ic)}" data-id="${t.id}">
       <span class="grow"><span class="nm">${esc(t.name)}</span><br><span class="sub">${esc(t.ic)} · ${esc(t.class_name||'tiada kelas')} · ${t.password_set?'PW ditetapkan':'guna default'}</span></span>
@@ -179,6 +180,9 @@ async function renderGuru(){
     }catch(e){ toast('Ralat: '+e.message); }
     $('#g-add').disabled=false;
   };
+  $('#g-templat').onclick=()=>download('templat_guru.csv','Nama,NoKP,Kelas\nCikgu Contoh,900101071234,5 AVICENNA');
+  $('#g-import').onclick=()=>$('#g-file').click();
+  $('#g-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>importGuruCSV(rd.result);rd.readAsText(f,'UTF-8');ev.target.value='';};
   $('#g-list').onclick=async e=>{
     const b=e.target.closest('[data-act]'); if(!b||b.tagName==='SELECT')return;
     const row=e.target.closest('.item'), ic=row.dataset.ic;
@@ -190,6 +194,24 @@ async function renderGuru(){
     const id=e.target.closest('.item').dataset.id;
     try{ const {error}=await sb.from('teachers').update({class_name:e.target.value||null}).eq('id',id); if(error)throw error; toast('Kelas dikemaskini'); }catch(err){toast('Ralat: '+err.message);}
   });
+}
+
+async function importGuruCSV(text){
+  const rows=parseCSV(text); if(rows.length<2){toast('Fail kosong');return;}
+  const h=rows[0].map(x=>x.toLowerCase().replace(/[^a-z]/g,''));
+  const find=ks=>h.findIndex(x=>ks.includes(x));
+  const iN=find(['nama','name']),iK=find(['nokp','nokad','ic','no']),iC=find(['kelas','class']);
+  if(iN<0||iK<0){toast('Lajur perlu: Nama, NoKP');return;}
+  const list=[];
+  for(let r=1;r<rows.length;r++){const c=rows[r];const name=(c[iN]||'').trim(),ic=(c[iK]||'').replace(/\D/g,''),kelas=(iC>=0?(c[iC]||'').trim():'');if(name&&ic)list.push({name,ic,class_name:kelas});}
+  if(!list.length){toast('Tiada baris ada NoKP — tak boleh cipta akaun tanpa NoKP');return;}
+  if(!confirm(`Cipta ${list.length} akaun guru? Password default = 4 digit akhir IC.`))return;
+  let ok=0,skip=0;
+  for(const g of list){
+    try{ await callFn({action:'create',ic:g.ic,name:g.name,class_name:g.class_name}); ok++; toast(`Mencipta… ${ok}/${list.length}`); }
+    catch(e){ skip++; }
+  }
+  renderGuru(); toast(`Siap: ${ok} dicipta, ${skip} gagal/dah wujud`);
 }
 
 /* ===== PELAJAR ===== */
@@ -241,6 +263,7 @@ async function renderData(){
       <div class="field"><label>Kelas</label><select id="lp-class"><option value="">Semua kelas</option></select></div>
       <button class="btn btn-primary" id="lp-go">Jana</button>
       <button class="btn btn-ghost" id="lp-print">Cetak</button>
+      <button class="btn btn-ghost" id="lp-del" style="color:var(--absent)">Padam Rekod</button>
     </div>
     <div class="seg" id="lp-seg">
       <button class="active" data-v="ringkasan">Ringkasan</button>
@@ -256,6 +279,7 @@ async function renderData(){
   $('#lp-class').innerHTML='<option value="">Semua kelas</option>'+classesFromStudents().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
   $('#lp-go').onclick=lpFetch;
   $('#lp-print').onclick=()=>window.print();
+  $('#lp-del').onclick=lpDelete;
   document.querySelector('#lp-seg').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;document.querySelectorAll('#lp-seg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderView(b.dataset.v);};
   lpFetch();
 }
@@ -273,6 +297,19 @@ async function lpFetch(){
   RPT={month:m,from,to,sessions:data||[]};
   const active=document.querySelector('#lp-seg button.active')?.dataset.v||'ringkasan';
   renderView(active);
+}
+
+async function lpDelete(){
+  if(!RPT.sessions||!RPT.sessions.length){toast('Tiada rekod untuk dipadam');return;}
+  const cls=$('#lp-class').value;
+  const scope=cls?`kelas ${cls}`:'SEMUA kelas';
+  if(!confirm(`Padam ${RPT.sessions.length} sesi (${scope}) untuk ${monthLabel()}?\nTermasuk semua rekod tidak hadir. TIDAK boleh undo.`))return;
+  if(!confirm('Sahkan sekali lagi — padam terus?'))return;
+  const ids=RPT.sessions.map(s=>s.id);
+  const {error}=await sb.from('attendance_sessions').delete().in('id',ids);
+  if(error){toast('Ralat: '+error.message);return;}
+  toast(`${ids.length} sesi dipadam ✓`);
+  lpFetch();
 }
 
 function computeRPT(){
