@@ -88,6 +88,14 @@
   .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   @media print{header.app,.tabs,.context,.savebar,.lap-head .btn,.toast{display:none!important}body{background:#fff}.wrap{padding:0}}
+  .seg{display:flex;gap:4px;background:#eef0f4;border-radius:11px;padding:4px;margin:16px 0 12px}
+  .seg button{flex:1;padding:8px;border:0;background:none;border-radius:8px;font:inherit;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer}
+  .seg button.active{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+  .rpt-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .rpt-table th{text-align:left;padding:9px 11px;background:var(--bg);font-weight:700;font-size:12px;color:var(--muted)}
+  .rpt-table td{padding:9px 11px;border-top:1px solid var(--line)}
+  .rpt-table tr.hot td{background:#fff5f3}
+  .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--absent-soft);color:var(--absent)}
 </style>
 </head>
 <body>
@@ -117,6 +125,7 @@
     <button class="tab active" data-tab="ambil">Ambil Kehadiran</button>
     <button class="tab" data-tab="data">Data</button>
     <button class="tab" data-tab="laporan">Laporan</button>
+    <button class="tab" data-tab="ulasan">Ulasan</button>
   </div>
 </header>
 
@@ -153,8 +162,15 @@
 
   <!-- DATA (ikut kelas guru) -->
   <section id="tab-data" class="hidden">
-    <p class="legend">Kelas awak sahaja. Disusun <b>kehadiran terendah dahulu</b>. <span style="color:var(--absent)">●</span> &lt;80% &nbsp;<span style="color:var(--warn)">●</span> 80–90% &nbsp;<span style="color:var(--present)">●</span> ≥90%</p>
+    <div class="seg" id="dt-seg">
+      <button data-p="minggu">Minggu Ini</button>
+      <button class="active" data-p="bulan">Bulan Ini</button>
+      <button data-p="semua">Semua</button>
+    </div>
+    <p class="legend">Kelas awak. <span style="color:var(--absent)">●</span> &lt;80% &nbsp;<span style="color:var(--warn)">●</span> 80–90% &nbsp;<span style="color:var(--present)">●</span> ≥90%</p>
     <div id="data-list"></div>
+    <h3 style="font-size:14px;margin:18px 2px 8px">Kekerapan Tidak Hadir</h3>
+    <div id="data-kekerapan"></div>
   </section>
 
   <!-- LAPORAN -->
@@ -167,6 +183,16 @@
       <button class="btn btn-ghost" id="lap-print">Cetak</button>
     </div>
     <div id="lap-container"></div>
+  </section>
+
+  <!-- ULASAN -->
+  <section id="tab-ulasan" class="hidden">
+    <div class="lap-head">
+      <div class="field"><label>Kelas</label><select id="ul-kelas"></select></div>
+      <div class="field" style="flex:2;min-width:200px"><label>Ulasan</label><input type="text" id="ul-text" placeholder="Cth: Kehadiran baik, 3 pelajar perlu perhatian"></div>
+      <button class="btn btn-primary" id="ul-add">Simpan</button>
+    </div>
+    <div id="ul-list"></div>
   </section>
 </div>
 
@@ -215,10 +241,14 @@ const DB={
     const{error:e2}=await sb.from('absentees').delete().eq('session_id',s.id);if(e2)throw e2;
     if(absent.length){const{error:e3}=await sb.from('absentees').insert(absent.map(a=>({session_id:s.id,student_id:a.student_id,reason:a.reason})));if(e3)throw e3;}
   },
-  async sessionsByClass(kelas){
-    const{data,error}=await sb.from('attendance_sessions').select('class_name,date,subject,absentees(student_id)').eq('class_name',kelas);
-    if(error)throw error;return data;
+  async sessionsByClass(kelas,from,to){
+    let q=sb.from('attendance_sessions').select('class_name,date,subject,absentees(reason,students(name,nokp))').eq('class_name',kelas);
+    if(from)q=q.gte('date',from); if(to)q=q.lte('date',to);
+    const{data,error}=await q;if(error)throw error;return data;
   },
+  async listRemarks(classes){const{data,error}=await sb.from('class_remarks').select('*').in('class_name',classes).order('created_at',{ascending:false});if(error)throw error;return data;},
+  async addRemark(r){const{error}=await sb.from('class_remarks').insert(r);if(error)throw error;},
+  async delRemark(id){const{error}=await sb.from('class_remarks').delete().eq('id',id);if(error)throw error;},
   async laporanSessions(kelas,from,to){
     const{data,error}=await sb.from('attendance_sessions')
       .select('id,date,subject,class_name,absentees(student_id,reason,students(name,nokp,kelas))')
@@ -238,6 +268,12 @@ const classesForTeacher=()=>{
   return all;
 };
 const rosterFor=kelas=>state.students.filter(s=>s.kelas===kelas).sort((a,b)=>a.name.localeCompare(b.name));
+const myClasses=()=>state.teacher?.class_name?[state.teacher.class_name]:classesForTeacher();
+function periodRange(p){const t=new Date();const to=todayISO();
+  if(p==='minggu'){const f=new Date(t);f.setDate(t.getDate()-6);return[f.toISOString().slice(0,10),to];}
+  if(p==='bulan')return[`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-01`,to];
+  return['0000-01-01','9999-12-31'];}
+const dataPeriod=()=>document.querySelector('#dt-seg button.active')?.dataset.p||'bulan';
 function getSubjek(){
   const v=$('#subjek').value;
   return v==='Lain-lain'?($('#subjek-custom').value.trim()||'Lain-lain'):v;
@@ -367,19 +403,21 @@ $('#btn-simpan').onclick=async()=>{
 
 /* ===== DATA (ikut kelas guru sahaja) ===== */
 async function renderData(){
-  const box=$('#data-list');box.innerHTML='<div class="empty">Mengira…</div>';
+  $('#dt-seg').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;document.querySelectorAll('#dt-seg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderDataBody();};
+  renderDataBody();
+}
+async function renderDataBody(){
+  const box=$('#data-list');box.innerHTML='<div class="empty">Mengira…</div>';$('#data-kekerapan').innerHTML='';
   try{
-    const myClasses=classesForTeacher();
-    if(!myClasses.length){box.innerHTML='<div class="empty"><strong>Tiada kelas</strong></div>';return;}
-    const results=await Promise.all(myClasses.map(c=>DB.sessionsByClass(c)));
-    const rows=myClasses.map((cn,i)=>{
-      const sessions=results[i];
-      const students=rosterFor(cn).length;
-      let absent=0;
-      sessions.forEach(s=>absent+=(s.absentees||[]).length);
-      const slots=students*sessions.length;
-      const rate=slots>0?((slots-absent)/slots*100):null;
-      return{cn,students,sessions:sessions.length,absent,rate};
+    const cls=myClasses();
+    if(!cls.length){box.innerHTML='<div class="empty"><strong>Tiada kelas</strong></div>';return;}
+    const [from,to]=periodRange(dataPeriod());
+    const results=await Promise.all(cls.map(c=>DB.sessionsByClass(c,from,to)));
+    const rows=cls.map((cn,i)=>{
+      const ss=results[i];const students=rosterFor(cn).length;
+      let absent=0;ss.forEach(s=>absent+=(s.absentees||[]).length);
+      const slots=students*ss.length;
+      return{cn,students,sessions:ss.length,absent,rate:slots>0?((slots-absent)/slots*100):null};
     }).sort((a,b)=>{if(a.rate===null)return 1;if(b.rate===null)return -1;return a.rate-b.rate;});
     box.innerHTML=rows.map(r=>{
       const col=r.rate===null?'#9aa3b2':r.rate<80?'var(--absent)':r.rate<90?'var(--warn)':'var(--present)';
@@ -387,7 +425,40 @@ async function renderData(){
       return `<div class="dcard"><div class="gauge" style="background:${col}">${label}</div>
         <div class="info"><div class="cn">${esc(r.cn)}</div>
         <div class="det">${r.students} pelajar · ${r.sessions} sesi · ${r.absent} kali tidak hadir</div></div></div>`;
-    }).join('');
+    }).join('')||'<div class="empty">Tiada sesi dalam tempoh ini.</div>';
+    // Kekerapan tidak hadir (pelajar yang sama)
+    const perStu={};
+    results.flat().forEach(s=>(s.absentees||[]).forEach(a=>{const st=a.students||{};const id=st.nokp||st.name;
+      perStu[id]=perStu[id]||{name:st.name||'-',nokp:st.nokp||'',count:0,reasons:{}};
+      perStu[id].count++;perStu[id].reasons[a.reason]=(perStu[id].reasons[a.reason]||0)+1;}));
+    const ku=Object.values(perStu).sort((a,b)=>b.count-a.count);
+    $('#data-kekerapan').innerHTML=ku.length?`<table class="rpt-table"><tr><th>#</th><th>Pelajar</th><th>Kali</th><th>Sebab</th></tr>
+      ${ku.map((p,i)=>`<tr class="${p.count>=3?'hot':''}"><td>${i+1}</td><td><b>${esc(p.name)}</b></td><td><span class="pill">${p.count}</span></td><td style="color:var(--muted)">${Object.entries(p.reasons).map(([r,n])=>esc(r)+'×'+n).join(', ')}</td></tr>`).join('')}
+      </table><p class="legend" style="margin-top:8px">Baris merah = 3 kali atau lebih tidak hadir (pelajar yang sama).</p>`
+      :'<div class="empty" style="padding:20px">Tiada ketidakhadiran dalam tempoh ini.</div>';
+  }catch(e){box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';}
+}
+
+/* ===== ULASAN ===== */
+async function renderUlasan(){
+  const cls=myClasses();
+  $('#ul-kelas').innerHTML=cls.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')||'<option value="">(Tiada kelas)</option>';
+  $('#ul-add').onclick=async()=>{
+    const kelas=$('#ul-kelas').value,remark=$('#ul-text').value.trim();
+    if(!kelas||!remark){toast('Pilih kelas & tulis ulasan');return;}
+    const now=new Date();const period=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    try{await DB.addRemark({teacher_ic:state.teacher?.ic||null,teacher_name:state.teacher?.name||null,class_name:kelas,period,remark});
+      $('#ul-text').value='';renderUlasan();toast('Ulasan disimpan ✓');}catch(e){toast('Ralat: '+e.message);}
+  };
+  const box=$('#ul-list');box.innerHTML='<div class="empty">Memuat…</div>';
+  try{
+    const rows=await DB.listRemarks(cls.length?cls:['__none__']);
+    box.innerHTML=rows.length?rows.map(r=>`<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>${esc(r.class_name)}</b><span style="font-size:12px;color:var(--muted)">${esc(r.period||'')}${r.teacher_name?' · '+esc(r.teacher_name):''}</span></div>
+      <div style="margin-top:5px">${esc(r.remark)}</div>
+      <button class="hbtn" data-del="${r.id}" style="margin-top:8px;color:var(--absent);font-size:12px;padding:5px 10px">Padam</button></div>`).join('')
+      :'<div class="empty"><strong>Tiada ulasan lagi</strong>Tulis ulasan untuk kelas anda di atas.</div>';
+    box.onclick=async e=>{const b=e.target.closest('[data-del]');if(!b)return;if(confirm('Padam ulasan ini?')){try{await DB.delRemark(b.dataset.del);renderUlasan();toast('Dipadam');}catch(e){toast('Ralat: '+e.message);}}};
   }catch(e){box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';}
 }
 
@@ -439,8 +510,10 @@ document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>
   $('#tab-ambil').classList.toggle('hidden',k!=='ambil');
   $('#tab-data').classList.toggle('hidden',k!=='data');
   $('#tab-laporan').classList.toggle('hidden',k!=='laporan');
+  $('#tab-ulasan').classList.toggle('hidden',k!=='ulasan');
   $('#savebar').classList.toggle('hidden',k!=='ambil');
   if(k==='data')renderData();
+  if(k==='ulasan')renderUlasan();
   if(k==='ambil'){fillKelasDropdown();loadCurrent();}
 }));
 

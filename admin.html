@@ -72,6 +72,11 @@
   .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--absent-soft);color:var(--absent)}
   .pill.g{background:#e7f6ef;color:var(--present)}.pill.w{background:#fdf2e1;color:var(--warn)}
   @media print{header.app,.tabs,.lap-bar,.seg,.btn{display:none!important}body{background:#fff}.wrap{padding:0}}
+  .drill{background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 var(--radius) var(--radius);margin:-8px 0 10px;padding:0 14px 12px}
+  .drill table{width:100%;border-collapse:collapse;font-size:13px}
+  .drill th{text-align:left;padding:7px 8px;color:var(--muted);font-size:11px;font-weight:700}
+  .drill td{padding:7px 8px;border-top:1px solid var(--line)}
+  .drill tr.rep td{background:#fff5f3}
 </style>
 </head>
 <body>
@@ -281,6 +286,7 @@ async function renderData(){
   $('#lp-print').onclick=()=>window.print();
   $('#lp-del').onclick=lpDelete;
   document.querySelector('#lp-seg').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;document.querySelectorAll('#lp-seg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderView(b.dataset.v);};
+  $('#lp-out').addEventListener('click',e=>{const d=e.target.closest('[data-drill]');if(!d)return;drillClass(d.getAttribute('data-drill'),d);});
   lpFetch();
 }
 
@@ -334,12 +340,32 @@ const rosterCount=cn=>cache.students.filter(s=>s.kelas===cn).length;
 const tName=ic=>ic==='?'?'(Tidak direkod)':(teachersByIc[ic]?.name||ic);
 const monthLabel=()=>{const d=new Date(RPT.from);return d.toLocaleDateString('ms-MY',{month:'long',year:'numeric'});};
 
+function drillClass(cn,cardEl){
+  const panel=cardEl.nextElementSibling;
+  if(!panel||!panel.hasAttribute('data-drillpanel'))return;
+  if(!panel.classList.contains('hidden')){panel.classList.add('hidden');panel.innerHTML='';return;}
+  // kumpul kekerapan pelajar dalam kelas ni
+  const perStu={};
+  (RPT.sessions||[]).filter(s=>s.class_name===cn).forEach(s=>{
+    (s.absentees||[]).forEach(a=>{const st=a.students||{};const id=st.nokp||st.name;
+      perStu[id]=perStu[id]||{name:st.name||'-',nokp:st.nokp||'',count:0,reasons:{}};
+      perStu[id].count++;perStu[id].reasons[a.reason]=(perStu[id].reasons[a.reason]||0)+1;});
+  });
+  const rows=Object.values(perStu).sort((a,b)=>b.count-a.count);
+  panel.classList.remove('hidden');
+  panel.innerHTML=rows.length?`<table><tr><th>Pelajar</th><th>Kali</th><th>Sebab</th></tr>
+    ${rows.map(p=>`<tr class="${p.count>=2?'rep':''}"><td><b>${esc(p.name)}</b></td><td>${p.count}</td><td style="color:var(--muted)">${Object.entries(p.reasons).map(([r,n])=>esc(r)+'×'+n).join(', ')}</td></tr>`).join('')}
+    </table><p class="legend" style="margin:8px 0 0">Baris merah = pelajar yang sama tidak hadir 2 kali atau lebih.</p>`
+    :'<p class="legend" style="margin:8px 0 0">Tiada ketidakhadiran untuk kelas ini.</p>';
+}
+
 function renderView(v){
   const box=$('#lp-out');
   if(!RPT.sessions.length){box.innerHTML='<div class="empty"><strong>Tiada rekod</strong>Tiada sesi kehadiran untuk bulan ini.</div>';return;}
   const C=computeRPT();
   if(v==='ringkasan'){
-    const totalSesi=RPT.sessions.length, totalAbsent=C.entries.length, kelasTerlibat=Object.keys(C.perClass).length;
+    const totalSesi=RPT.sessions.length, totalInstances=C.entries.length;
+    const distinctStudents=Object.keys(C.perStudent).length, kelasTerlibat=Object.keys(C.perClass).length;
     let slots=0,absent=0;
     Object.entries(C.perClass).forEach(([cn,x])=>{slots+=rosterCount(cn)*x.sessions;absent+=x.absent;});
     const rate=slots>0?Math.round((slots-absent)/slots*100):'—';
@@ -347,11 +373,17 @@ function renderView(v){
     box.innerHTML=`<div class="cards">
         <div class="mcard"><div class="n">${totalSesi}</div><div class="l">Sesi (${esc(monthLabel())})</div></div>
         <div class="mcard"><div class="n">${kelasTerlibat}</div><div class="l">Kelas terlibat</div></div>
-        <div class="mcard"><div class="n" style="color:var(--absent)">${totalAbsent}</div><div class="l">Kali tidak hadir</div></div>
+        <div class="mcard"><div class="n" style="color:var(--absent)">${distinctStudents}</div><div class="l">Pelajar tidak hadir</div></div>
+        <div class="mcard"><div class="n" style="color:var(--warn)">${totalInstances}</div><div class="l">Jumlah kali tidak hadir</div></div>
         <div class="mcard"><div class="n" style="color:var(--present)">${rate}%</div><div class="l">Kehadiran keseluruhan</div></div>
       </div>
+      <p class="legend">Tekan mana-mana kelas untuk lihat senarai pelajar &amp; kekerapan.</p>
       ${gauges.map(r=>{const col=r.rate===null?'#9aa3b2':r.rate<80?'var(--absent)':r.rate<90?'var(--warn)':'var(--present)';const lb=r.rate===null?'—':Math.round(r.rate)+'%';
-        return `<div class="dcard"><div class="gauge" style="background:${col}">${lb}</div><div><div class="cn">${esc(r.cn)}</div><div class="det">${rosterCount(r.cn)} pelajar · ${r.sessions} sesi · ${r.absent} kali tidak hadir</div></div></div>`;}).join('')}`;
+        return `<div class="dcard" data-drill="${esc(r.cn)}" style="cursor:pointer">
+          <div class="gauge" style="background:${col}">${lb}</div>
+          <div class="info"><div class="cn">${esc(r.cn)} <span style="font-size:11px;color:var(--muted)">▼ tekan</span></div>
+          <div class="det">${rosterCount(r.cn)} pelajar · ${r.sessions} sesi · ${r.absent} kali tidak hadir</div></div></div>
+          <div class="drill hidden" data-drillpanel="${esc(r.cn)}"></div>`;}).join('')}`;
   }
   else if(v==='kekerapan'){
     const rows=Object.values(C.perStudent).sort((a,b)=>b.count-a.count);
