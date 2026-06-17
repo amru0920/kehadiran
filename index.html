@@ -129,7 +129,6 @@
     <img class="logo" src="logo.jpg" alt="SMK Batu Maung">
     <div><h1>Kehadiran Kelas Tambahan</h1><p id="who-am-i">—</p></div>
     <div class="sp"></div>
-    <a href="admin.html" class="hbtn" id="lnk-admin" style="margin-right:6px">Admin</a>
     <button class="hbtn" id="btn-logout">Log Keluar</button>
   </div>
   <div class="tabs">
@@ -137,6 +136,7 @@
     <button class="tab" data-tab="data">Data</button>
     <button class="tab" data-tab="laporan">Laporan</button>
     <button class="tab" data-tab="pelajar">Pelajar</button>
+    <button class="tab hidden" data-tab="adminlink" id="tab-admin-btn" style="color:var(--brand)">⚙ Admin</button>
   </div>
 </header>
 
@@ -161,6 +161,8 @@
       </div>
       <div class="field hidden" id="subjek-custom-wrap"><label>Nama Subjek</label><input type="text" id="subjek-custom" placeholder="Taip nama subjek"></div>
       <div class="field"><label>Tarikh</label><input type="date" id="tarikh"></div>
+      <div class="field"><label>Masa Mula</label><input type="time" id="masa-mula"></div>
+      <div class="field"><label>Masa Tamat</label><input type="time" id="masa-tamat"></div>
     </div>
     <div class="summary">
       <div class="stat present"><div class="n" id="stat-hadir">0</div><div class="l">Hadir</div></div>
@@ -231,7 +233,7 @@ const emailToIc=em=>(em||'').split('@')[0];
 const fmtDate=iso=>new Date(iso+'T00:00').toLocaleDateString('ms-MY',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 
-const REASONS=['Sakit','Kebenaran','Tanpa Sebab','Lain-lain'];
+const REASONS=['Sakit','Kebenaran','Tanpa Sebab','Ponteng','Lain-lain'];
 const state={teacher:null,students:[]};
 const current={kelas:null,date:null,subjek:null,roster:[],absent:{}};
 
@@ -241,13 +243,13 @@ const DB={
   async setPasswordFlag(ic){const{error}=await sb.from('teachers').update({password_set:true}).eq('ic',ic);if(error)throw error;},
   async students(){const{data,error}=await sb.from('students').select('*').order('name');if(error)throw error;return data;},
   async getSession(kelas,date,subjek){
-    const{data,error}=await sb.from('attendance_sessions').select('id,absentees(student_id,reason)')
+    const{data,error}=await sb.from('attendance_sessions').select('id,session_time,absentees(student_id,reason)')
       .eq('class_name',kelas).eq('date',date).eq('subject',subjek||'').maybeSingle();
     if(error)throw error;return data;
   },
-  async saveSession(kelas,date,subjek,recorded_by,absent){
+  async saveSession(kelas,date,subjek,recorded_by,session_time,absent){
     const{data:s,error:e1}=await sb.from('attendance_sessions')
-      .upsert({class_name:kelas,date,subject:subjek||'',recorded_by},{onConflict:'class_name,date,subject'}).select('id').single();
+      .upsert({class_name:kelas,date,subject:subjek||'',recorded_by,session_time:session_time||null},{onConflict:'class_name,date,subject'}).select('id').single();
     if(e1)throw e1;
     const{error:e2}=await sb.from('absentees').delete().eq('session_id',s.id);if(e2)throw e2;
     if(absent.length){const{error:e3}=await sb.from('absentees').insert(absent.map(a=>({session_id:s.id,student_id:a.student_id,reason:a.reason})));if(e3)throw e3;}
@@ -260,13 +262,13 @@ const DB={
   async listRemarks(classes){const{data,error}=await sb.from('class_remarks').select('*').in('class_name',classes).order('created_at',{ascending:false});if(error)throw error;return data;},
   async addRemark(r){const{error}=await sb.from('class_remarks').insert(r);if(error)throw error;},
   async delRemark(id){const{error}=await sb.from('class_remarks').delete().eq('id',id);if(error)throw error;},
-  async studentAbsences(studentId){const{data,error}=await sb.from('absentees').select('reason,attendance_sessions(date,class_name,subject)').eq('student_id',studentId);if(error)throw error;return data;},
+  async studentAbsences(studentId){const{data,error}=await sb.from('absentees').select('reason,attendance_sessions(date,class_name,subject,session_time)').eq('student_id',studentId);if(error)throw error;return data;},
   async listDiscipline(nokp){const{data,error}=await sb.from('discipline').select('*').eq('student_nokp',nokp).order('created_at',{ascending:false});if(error)throw error;return data;},
   async addDiscipline(d){const{error}=await sb.from('discipline').insert(d);if(error)throw error;},
   async delDiscipline(id){const{error}=await sb.from('discipline').delete().eq('id',id);if(error)throw error;},
   async laporanSessions(kelas,from,to){
     const{data,error}=await sb.from('attendance_sessions')
-      .select('id,date,subject,class_name,absentees(student_id,reason,students(name,nokp,kelas))')
+      .select('id,date,subject,session_time,class_name,absentees(student_id,reason,students(name,nokp,kelas))')
       .eq('class_name',kelas).gte('date',from).lte('date',to).order('date');
     if(error)throw error;return data;
   }
@@ -293,6 +295,8 @@ function getSubjek(){
   const v=$('#subjek').value;
   return v==='Lain-lain'?($('#subjek-custom').value.trim()||'Lain-lain'):v;
 }
+function getMasa(){const a=$('#masa-mula').value,b=$('#masa-tamat').value;return a&&b?`${a}-${b}`:(a||'');}
+function fmtMasa(t){if(!t)return '';const[a,b]=t.split('-');return b?`${a}–${b}`:a;}
 
 /* ===== AUTH ===== */
 function showScreen(name){
@@ -321,19 +325,11 @@ async function afterLogin(){
   const ic=emailToIc(user.email);
   let t=null;try{t=await DB.myTeacher(ic);}catch(e){}
   state.teacher=t||{ic,name:ic,is_admin:false};
-  // Sembunyikan pautan Admin kalau bukan admin
-  if(!state.teacher.is_admin) $('#lnk-admin').classList.add('hidden');
+  // Tab Admin hanya untuk guru yang dibenarkan
+  $('#tab-admin-btn').classList.toggle('hidden', !state.teacher.is_admin);
   await enterApp();
 }
 $('#btn-logout').onclick=async()=>{await sb.auth.signOut();state.teacher=null;showScreen('login');$('#lg-ic').value='';};
-
-// Klik Admin — check is_admin dulu
-$('#lnk-admin').addEventListener('click',e=>{
-  if(!state.teacher?.is_admin){
-    e.preventDefault();
-    alert('⚠️ Anda tidak mempunyai akses ke panel Admin.\nSila hubungi pentadbir sistem.');
-  }
-});
 
 /* ===== ENTER APP ===== */
 async function enterApp(){
@@ -378,8 +374,12 @@ async function loadCurrent(){
   current.roster=rosterFor(current.kelas);
   try{
     const s=await DB.getSession(current.kelas,current.date,current.subjek);
-    if(s)s.absentees.forEach(a=>current.absent[a.student_id]=a.reason);
-    $('#save-info').textContent=s?'Sudah ada rekod tarikh ini':'Belum disimpan';
+    if(s){
+      s.absentees.forEach(a=>current.absent[a.student_id]=a.reason);
+      if(s.session_time){const[a,b]=s.session_time.split('-');$('#masa-mula').value=a||'';$('#masa-tamat').value=b||'';}
+    }
+    $('#save-info').textContent=s?'✏️ Mod edit — rekod sedia ada dimuatkan, ubah & simpan semula':'Belum disimpan';
+    $('#btn-simpan').textContent=s?'Kemaskini Rekod':'Simpan Rekod';
   }catch(e){toast('Ralat memuat: '+e.message);}
   renderRoster();
 }
@@ -409,9 +409,9 @@ $('#btn-simpan').onclick=async()=>{
   // Kena update schema supaya unique termasuk subject
   $('#btn-simpan').disabled=true;
   try{
-    await DB.saveSession(current.kelas,current.date,current.subjek,state.teacher?.ic||null,
+    await DB.saveSession(current.kelas,current.date,current.subjek,state.teacher?.ic||null,getMasa(),
       Object.entries(current.absent).map(([student_id,reason])=>({student_id,reason})));
-    $('#save-info').textContent='Disimpan ✓';toast('Rekod disimpan ✓');
+    $('#save-info').textContent='Disimpan ✓';$('#btn-simpan').textContent='Kemaskini Rekod';toast('Rekod disimpan ✓');
   }catch(e){toast('Ralat simpan: '+e.message);}
   $('#btn-simpan').disabled=false;
 };
@@ -478,7 +478,7 @@ async function showProfil(s){
   try{
     const [abs,disc]=await Promise.all([DB.studentAbsences(s.id),DB.listDiscipline(s.nokp)]);
     const reasons={};abs.forEach(a=>reasons[a.reason]=(reasons[a.reason]||0)+1);
-    const aRows=abs.map(a=>({date:a.attendance_sessions?.date||'-',kelas:a.attendance_sessions?.class_name||'',subject:a.attendance_sessions?.subject||'-',reason:a.reason})).sort((x,y)=>y.date.localeCompare(x.date));
+    const aRows=abs.map(a=>({date:a.attendance_sessions?.date||'-',kelas:a.attendance_sessions?.class_name||'',subject:a.attendance_sessions?.subject||'-',masa:a.attendance_sessions?.session_time||'',reason:a.reason})).sort((x,y)=>y.date.localeCompare(x.date));
     const reasonStr=Object.entries(reasons).map(([r,n])=>esc(r)+'×'+n).join(', ')||'-';
     $('#pp-out').innerHTML=`
       <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)">
@@ -491,8 +491,8 @@ async function showProfil(s){
       </div>
 
       <h3 style="font-size:14px;margin:6px 2px 8px">Rekod Tidak Hadir</h3>
-      ${aRows.length?`<table class="rpt-table"><tr><th>Tarikh</th><th>Kelas</th><th>Subjek</th><th>Sebab</th></tr>
-        ${aRows.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.kelas)}</td><td>${esc(a.subject)}</td><td><span class="pill">${esc(a.reason)}</span></td></tr>`).join('')}
+      ${aRows.length?`<table class="rpt-table"><tr><th>Tarikh</th><th>Kelas</th><th>Subjek</th><th>Masa</th><th>Sebab</th></tr>
+        ${aRows.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.kelas)}</td><td>${esc(a.subject)}</td><td>${esc(fmtMasa(a.masa))}</td><td><span class="pill">${esc(a.reason)}</span></td></tr>`).join('')}
         </table><p class="legend" style="margin-top:6px">Pecahan sebab: ${reasonStr}</p>`
         :'<div class="empty" style="padding:16px">Tiada rekod tidak hadir. ✓</div>'}
 
@@ -531,7 +531,7 @@ async function renderLaporan(){
         const nm=a.students?.name||a.student_id;
         const nokp=a.students?.nokp||'';
         if(!absentMap[a.student_id])absentMap[a.student_id]={name:nm,nokp,entries:[]};
-        absentMap[a.student_id].entries.push({date:s.date,subject:s.subject||'-',reason:a.reason});
+        absentMap[a.student_id].entries.push({date:s.date,subject:s.subject||'-',masa:s.session_time||'',reason:a.reason});
       });
     });
     const absentList=Object.values(absentMap).sort((a,b)=>a.name.localeCompare(b.name));
@@ -540,7 +540,7 @@ async function renderLaporan(){
         <h4>Laporan Ketidakhadiran</h4>
         <div class="sub">${esc(kelas)} · ${fmtDate(from)} – ${fmtDate(to)} · ${sessions.length} sesi · ${absentList.length} pelajar tidak hadir</div>
         ${absentList.length?`<table class="rpt-table">
-          <tr><th>#</th><th>Nama Pelajar</th><th>NoKP</th><th>Tarikh</th><th>Subjek</th><th>Sebab</th></tr>
+          <tr><th>#</th><th>Nama Pelajar</th><th>NoKP</th><th>Tarikh</th><th>Subjek</th><th>Masa</th><th>Sebab</th></tr>
           ${absentList.flatMap((p,i)=>p.entries.map((e,j)=>`
             <tr>
               <td>${j===0?i+1:''}</td>
@@ -548,6 +548,7 @@ async function renderLaporan(){
               <td>${j===0?esc(p.nokp):''}</td>
               <td>${fmtDate(e.date)}</td>
               <td>${esc(e.subject)}</td>
+              <td>${esc(fmtMasa(e.masa))}</td>
               <td><span class="badge-reason">${esc(e.reason)}</span></td>
             </tr>`)).join('')}
         </table>`:'<div style="color:var(--present);font-weight:600;padding:10px 0">✓ Semua pelajar hadir sepanjang tempoh ini.</div>'}
@@ -559,8 +560,9 @@ $('#lap-print').onclick=()=>window.print();
 
 /* ===== NAV ===== */
 document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');
   const k=tab.dataset.tab;
+  if(k==='adminlink'){ if(state.teacher?.is_admin){ window.location.href='admin.html'; } return; }
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');
   $('#tab-ambil').classList.toggle('hidden',k!=='ambil');
   $('#tab-data').classList.toggle('hidden',k!=='data');
   $('#tab-laporan').classList.toggle('hidden',k!=='laporan');

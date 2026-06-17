@@ -327,7 +327,7 @@ async function lpFetch(){
   const from=m+'-01', to=`${last.getFullYear()}-${String(last.getMonth()+1).padStart(2,'0')}-${String(last.getDate()).padStart(2,'0')}`;
   const cls=$('#lp-class').value;
   $('#lp-out').innerHTML='<div class="empty">Mengira…</div>';
-  let q=sb.from('attendance_sessions').select('id,class_name,date,subject,recorded_by,absentees(reason,students(id,name,nokp,kelas))').gte('date',from).lte('date',to).order('date');
+  let q=sb.from('attendance_sessions').select('id,class_name,date,subject,session_time,recorded_by,absentees(reason,students(id,name,nokp,kelas))').gte('date',from).lte('date',to).order('date');
   if(cls) q=q.eq('class_name',cls);
   const {data,error}=await q;
   if(error){$('#lp-out').innerHTML='<div class="empty">Ralat: '+esc(error.message)+'</div>';return;}
@@ -359,7 +359,7 @@ function computeRPT(){
     perTeacher[tk].sessions++;
     (s.absentees||[]).forEach(a=>{
       const st=a.students||{}; const id=st.id||(st.nokp||Math.random());
-      entries.push({date:s.date,kelas:s.class_name,subject:s.subject||'-',reason:a.reason,name:st.name||'-',nokp:st.nokp||''});
+      entries.push({date:s.date,kelas:s.class_name,subject:s.subject||'-',masa:s.session_time||'',reason:a.reason,name:st.name||'-',nokp:st.nokp||''});
       perStudent[id]=perStudent[id]||{name:st.name||'-',nokp:st.nokp||'',kelas:st.kelas||'',count:0,reasons:{}};
       perStudent[id].count++; perStudent[id].reasons[a.reason]=(perStudent[id].reasons[a.reason]||0)+1;
       perClass[s.class_name].absent++; perTeacher[tk].absent++;
@@ -459,8 +459,8 @@ function renderView(v){
     box.innerHTML=`<div class="rpt-card" style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)">
       <h3 style="margin:0 0 4px">Senarai Ketidakhadiran — ${esc(monthLabel())}</h3>
       <p class="legend" style="margin:0 0 10px">${rows.length} rekod</p>
-      <table class="rpt-table"><tr><th>Tarikh</th><th>Kelas</th><th>Subjek</th><th>Nama</th><th>NoKP</th><th>Sebab</th></tr>
-      ${rows.map(e=>`<tr><td>${esc(e.date)}</td><td>${esc(e.kelas)}</td><td>${esc(e.subject)}</td><td>${esc(e.name)}</td><td>${esc(e.nokp)}</td><td><span class="pill">${esc(e.reason)}</span></td></tr>`).join('')||'<tr><td colspan=6 style="color:var(--present)">Tiada ketidakhadiran.</td></tr>'}
+      <table class="rpt-table"><tr><th>Tarikh</th><th>Kelas</th><th>Subjek</th><th>Masa</th><th>Nama</th><th>NoKP</th><th>Sebab</th></tr>
+      ${rows.map(e=>`<tr><td>${esc(e.date)}</td><td>${esc(e.kelas)}</td><td>${esc(e.subject)}</td><td>${esc((e.masa||'').replace('-','–'))}</td><td>${esc(e.name)}</td><td>${esc(e.nokp)}</td><td><span class="pill">${esc(e.reason)}</span></td></tr>`).join('')||'<tr><td colspan=7 style="color:var(--present)">Tiada ketidakhadiran.</td></tr>'}
       </table></div>`;
   }
 }
