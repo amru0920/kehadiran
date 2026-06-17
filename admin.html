@@ -93,7 +93,7 @@
     <div class="logo">A</div>
     <div><h1>Panel Admin</h1><p>Kehadiran Kelas Tambahan</p></div>
     <div class="sp"></div>
-    
+    <a href="index.html" class="logout" style="text-decoration:none;margin-right:6px">App Guru</a>
     <button class="logout" id="btn-logout">Log Keluar</button>
   </div>
   <div class="tabs">
@@ -331,10 +331,28 @@ function renderView(v){
     </table>`;
   }
   else if(v==='guru'){
-    const rows=Object.entries(C.perTeacher).map(([ic,x])=>({ic,...x})).sort((a,b)=>b.sessions-a.sessions);
-    box.innerHTML=`<table class="rpt-table"><tr><th>Guru</th><th>Sesi Direkod</th><th>Tidak Hadir (dalam sesi dia)</th></tr>
-      ${rows.map(r=>`<tr><td><b>${esc(tName(r.ic))}</b></td><td>${r.sessions}</td><td>${r.absent}</td></tr>`).join('')}
-    </table><p class="legend" style="margin-top:8px">Berdasarkan guru yang merekod setiap sesi.</p>`;
+    const byT={};
+    (RPT.sessions||[]).forEach(s=>{
+      const ic=s.recorded_by||'?';
+      byT[ic]=byT[ic]||{sessions:0,absent:0,classes:{}};
+      byT[ic].sessions++;
+      byT[ic].classes[s.class_name]=byT[ic].classes[s.class_name]||{sessions:0,absent:0};
+      byT[ic].classes[s.class_name].sessions++;
+      const n=(s.absentees||[]).length;
+      byT[ic].absent+=n; byT[ic].classes[s.class_name].absent+=n;
+    });
+    const teachers=Object.entries(byT).map(([ic,x])=>({ic,...x})).sort((a,b)=>b.sessions-a.sessions);
+    box.innerHTML=teachers.map(t=>{
+      const clsRows=Object.entries(t.classes).sort((a,b)=>a[0].localeCompare(b[0]))
+        .map(([cn,c])=>`<tr><td>${esc(cn)}</td><td>${c.sessions}</td><td>${c.absent}</td></tr>`).join('');
+      return `<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px">
+          <b style="font-size:15px">${esc(tName(t.ic))}</b>
+          <span style="font-size:12px;color:var(--muted)">${t.sessions} sesi · ${t.absent} tidak hadir</span>
+        </div>
+        <table class="rpt-table"><tr><th>Kelas</th><th>Sesi</th><th>Tidak Hadir</th></tr>${clsRows}</table>
+      </div>`;
+    }).join('')+`<p class="legend" style="margin-top:8px">Dikumpulkan ikut akaun guru yang log masuk semasa merekod. Setiap guru dipecahkan ikut kelas mereka.</p>`;
   }
   else if(v==='detail'){
     const rows=C.entries.sort((a,b)=>a.date.localeCompare(b.date)||a.kelas.localeCompare(b.kelas));
