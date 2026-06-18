@@ -193,11 +193,13 @@ async function renderGuru(){
   let list=[]; try{ const {data,error}=await sb.from('teachers').select('*').order('name'); if(error)throw error; list=data; await loadStudents(); }catch(e){ toast('Ralat: '+e.message); }
   const cls=classesFromStudents();
   const clsOpts=v=>'<option value="">(Tiada kelas)</option>'+cls.map(c=>`<option value="${esc(c)}" ${c===v?'selected':''}>${esc(c)}</option>`).join('');
-  $('#tab-guru').innerHTML=`<div class="card"><h3>Guru</h3>
+  $('#tab-guru').innerHTML=`<div class="card"><h3>Guru <span style="font-size:13px;color:var(--muted);font-weight:600">(${list.length} orang)</span></h3>
     <div class="addrow"><input type="text" id="g-name" placeholder="Nama"><input type="text" id="g-ic" placeholder="No. KP (12 digit)" inputmode="numeric"><select id="g-class">${clsOpts()}</select><button class="btn btn-primary" id="g-add">Tambah + Cipta Akaun</button></div>
     <div class="addrow"><button class="btn btn-ghost" id="g-import">Import Guru (CSV)</button><button class="btn btn-ghost" id="g-templat">Templat CSV</button><input type="file" id="g-file" accept=".csv" hidden></div>
+    <div class="addrow"><input type="text" id="g-search" placeholder="🔍 Cari nama atau No. KP guru"></div>
     <div id="g-tip" class="acct-tip hidden"></div>
-    <div id="g-list" style="margin-top:6px">${list.map(t=>`<div class="item" data-ic="${esc(t.ic)}" data-id="${t.id}">
+    <div id="g-count" class="sub" style="margin:4px 2px"></div>
+    <div id="g-list" style="margin-top:6px">${list.map(t=>`<div class="item" data-ic="${esc(t.ic)}" data-id="${t.id}" data-name="${esc((t.name||'').toLowerCase())}">
       <span class="grow"><span class="nm">${esc(t.name)} ${t.is_admin?'<span class="pill g" style="font-size:10px">ADMIN</span>':''}</span><br><span class="sub">${esc(t.ic)} · ${esc(t.class_name||'tiada kelas')}</span></span>
       <select data-act="setclass">${clsOpts(t.class_name)}</select>
       <button class="icon-btn" data-act="admin" style="${t.is_admin?'background:var(--ink);color:#fff;border-color:var(--ink)':''}">Admin</button>
@@ -218,6 +220,13 @@ async function renderGuru(){
   $('#g-templat').onclick=()=>download('templat_guru.csv','Nama,NoKP,Kelas\nCikgu Contoh,900101071234,5 AVICENNA');
   $('#g-import').onclick=()=>$('#g-file').click();
   $('#g-file').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>importGuruCSV(rd.result);rd.readAsText(f,'UTF-8');ev.target.value='';};
+  $('#g-search').oninput=e=>{
+    const q=e.target.value.trim().toLowerCase();
+    const items=[...document.querySelectorAll('#g-list .item')];
+    let shown=0;
+    items.forEach(it=>{const hit=!q||it.dataset.name.includes(q)||(it.dataset.ic||'').includes(q);it.style.display=hit?'':'none';if(hit)shown++;});
+    $('#g-count').textContent=q?`${shown} padanan ditemui`:'';
+  };
   $('#g-list').onclick=async e=>{
     const b=e.target.closest('[data-act]'); if(!b||b.tagName==='SELECT')return;
     const row=e.target.closest('.item'), ic=row.dataset.ic;
