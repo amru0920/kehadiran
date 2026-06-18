@@ -244,7 +244,7 @@ const DB={
   async setPasswordFlag(ic){const{error}=await sb.from('teachers').update({password_set:true}).eq('ic',ic);if(error)throw error;},
   async students(){const{data,error}=await sb.from('students').select('*').order('name');if(error)throw error;return data;},
   async getSession(kelas,date,subjek){
-    const{data,error}=await sb.from('attendance_sessions').select('id,session_time,absentees(student_id,reason)')
+    const{data,error}=await sb.from('attendance_sessions').select('id,session_time,recorded_by,absentees(student_id,reason)')
       .eq('class_name',kelas).eq('date',date).eq('subject',subjek||'').maybeSingle();
     if(error)throw error;return data;
   },
@@ -382,7 +382,15 @@ async function loadCurrent(){
       s.absentees.forEach(a=>current.absent[a.student_id]=a.reason);
       if(s.session_time){const[a,b]=s.session_time.split('-');$('#masa-mula').value=a||'';$('#masa-tamat').value=b||'';}
     }
-    $('#save-info').textContent=s?'✏️ Mod edit — rekod sedia ada dimuatkan, ubah & simpan semula':'Belum disimpan';
+    const myIc=state.teacher?.ic||null;
+    if(s && s.recorded_by && myIc && s.recorded_by!==myIc){
+      // sesi direkod oleh cikgu LAIN — amaran tindih
+      $('#save-info').innerHTML='⚠️ Sesi ini direkod oleh <b>'+esc(tName(s.recorded_by))+'</b>. Simpan akan TINDIH rekod beliau.';
+      $('#save-info').style.color='var(--absent)';
+    } else {
+      $('#save-info').textContent=s?'✏️ Mod edit — rekod sedia ada dimuatkan, ubah & simpan semula':'Belum disimpan';
+      $('#save-info').style.color='';
+    }
     $('#btn-simpan').textContent=s?'Kemaskini Rekod':'Simpan Rekod';
   }catch(e){toast('Ralat memuat: '+e.message);}
   renderRoster();
@@ -470,11 +478,39 @@ function renderPelajar(){
   $('#pp-q').onkeydown=e=>{if(e.key==='Enter')ppSearch();};
   $('#pp-out').innerHTML='<div class="empty"><strong>Pilih kelas</strong>Pilih kelas untuk lihat senarai pelajar, atau cari nama/No. KP.</div>';
 }
-function studentRow(s,i){return `<div class="dcard" data-id="${s.id}" style="cursor:pointer"><div class="info"><div class="cn">${i!=null?i+1+'. ':''}${esc(s.name)}</div><div class="det">${esc(s.nokp)} · ${esc(s.kelas||'')}</div></div></div>`;}
-function listByClass(kelas){
+function pctColor(pct){
+  if(pct==null) return {b:'var(--absent)',bg:'#fff0ed'};
+  if(pct>=90) return {b:'var(--present)',bg:'#f0faf5'};
+  if(pct>=80) return {b:'var(--warn)',bg:'#fff8ec'};
+  if(pct>=70) return {b:'#e8743b',bg:'#fff1e8'};
+  return {b:'var(--absent)',bg:'#fff0ed'};
+}
+function studentRow(s,i,info){
+  // info = {absent, pct} untuk pelajar yang pernah tidak hadir; null jika kehadiran penuh
+  let style='cursor:pointer', tag='';
+  if(info && info.absent>0){
+    const col=pctColor(info.pct);
+    style=`cursor:pointer;border-left:5px solid ${col.b};background:${col.bg}`;
+    tag=info.pct!=null?` <span class="pill" style="background:${col.b};color:#fff">${info.pct}%</span>`:` <span class="pill">${info.absent}×</span>`;
+  }
+  const detExtra=info&&info.absent>0?` · ${info.absent} kali tidak hadir`:'';
+  return `<div class="dcard" data-id="${s.id}" style="${style}"><div class="info"><div class="cn">${i!=null?i+1+'. ':''}${esc(s.name)}${tag}</div><div class="det">${esc(s.nokp)} · ${esc(s.kelas||'')}${detExtra}</div></div></div>`;
+}
+async function listByClass(kelas){
   if(!kelas){$('#pp-out').innerHTML='';return;}
   const list=state.students.filter(s=>s.kelas===kelas).sort((a,b)=>a.name.localeCompare(b.name));
-  $('#pp-out').innerHTML=`<p class="legend">${list.length} pelajar dalam <b>${esc(kelas)}</b> — tekan nama untuk lihat kehadiran.</p>`+list.map((s,i)=>studentRow(s,i)).join('');
+  $('#pp-out').innerHTML='<div class="empty">Memuat…</div>';
+  let total=0; const absCount={};
+  try{
+    const {data,error}=await sb.from('attendance_sessions').select('absentees(student_id)').eq('class_name',kelas);
+    if(error)throw error;
+    total=(data||[]).length;
+    (data||[]).forEach(s=>(s.absentees||[]).forEach(a=>{absCount[a.student_id]=(absCount[a.student_id]||0)+1;}));
+  }catch(e){/* kalau gagal, papar tanpa tanda */}
+  const info=id=>{const ab=absCount[id]||0; if(ab<=0)return null; return {absent:ab, pct: total>0?Math.round((total-ab)/total*100):null};};
+  const absentN=list.filter(s=>absCount[s.id]).length;
+  $('#pp-out').innerHTML=`<p class="legend">${list.length} pelajar dalam <b>${esc(kelas)}</b> · <span style="color:var(--absent)">${absentN} pernah tidak hadir</span> — warna ikut % kehadiran: <span style="color:var(--present)">●</span>≥90 <span style="color:var(--warn)">●</span>80–89 <span style="color:#e8743b">●</span>70–79 <span style="color:var(--absent)">●</span>&lt;70. Tekan nama untuk butiran.</p>`+
+    list.map((s,i)=>studentRow(s,i,info(s.id))).join('');
   $('#pp-out').onclick=e=>{const d=e.target.closest('[data-id]');if(d){const s=state.students.find(x=>x.id===d.dataset.id);if(s)showProfil(s,kelas);}};
 }
 function ppSearch(){
@@ -490,26 +526,26 @@ function ppSearch(){
 async function showProfil(s,backClass){
   $('#pp-out').innerHTML='<div class="empty">Memuat…</div>';
   try{
-    const [abs,disc,total]=await Promise.all([DB.studentAbsences(s.id),DB.listDiscipline(s.nokp),DB.classSessionCount(s.kelas)]);
-    const absentN=abs.length, attended=Math.max(0,total-absentN), pct=total>0?Math.round(attended/total*100):100;
-    const pcol=pct>=90?'var(--present)':pct>=80?'var(--warn)':'var(--absent)';
-    const aRows=abs.map(a=>({date:a.attendance_sessions?.date||'-',subject:a.attendance_sessions?.subject||'-',masa:a.attendance_sessions?.session_time||'',cikgu:tName(a.attendance_sessions?.recorded_by),reason:a.reason})).sort((x,y)=>y.date.localeCompare(x.date));
+    const [abs,disc,sessR]=await Promise.all([
+      DB.studentAbsences(s.id),
+      DB.listDiscipline(s.nokp),
+      sb.from('attendance_sessions').select('subject').eq('class_name',s.kelas)
+    ]);
+    if(sessR.error)throw sessR.error;
+    const sessions=sessR.data||[];
+    const totalAll=sessions.length;
+    const perSubjTotal={};
+    sessions.forEach(x=>{const j=x.subject||'(tiada subjek)';perSubjTotal[j]=(perSubjTotal[j]||0)+1;});
+    const subjects=Object.keys(perSubjTotal).sort();
+    const absAll=abs.map(a=>({date:a.attendance_sessions?.date||'-',subject:a.attendance_sessions?.subject||'(tiada subjek)',masa:a.attendance_sessions?.session_time||'',cikgu:tName(a.attendance_sessions?.recorded_by),reason:a.reason}));
     const back=backClass?`<button class="btn btn-ghost" id="pp-back" style="margin-bottom:10px">← Senarai ${esc(backClass)}</button>`:'';
     $('#pp-out').innerHTML=`${back}
-      <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-        <div style="width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:${pcol};color:#fff;font-size:24px;font-weight:800;flex:0 0 auto">${total>0?pct+'%':'—'}</div>
-        <div style="flex:1;min-width:160px">
-          <div style="font-size:18px;font-weight:800">${esc(s.name)}</div>
-          <div style="font-size:13px;color:var(--muted)">${esc(s.nokp)} · ${esc(s.kelas||'')}</div>
-          <div style="margin-top:8px;font-size:13px;color:var(--muted)">${total>0?`Hadir ${attended}/${total} sesi · ${absentN} kali tidak hadir`:'Belum ada sesi direkod untuk kelas ini'}</div>
-        </div>
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow)">
+        <div style="font-size:18px;font-weight:800">${esc(s.name)}</div>
+        <div style="font-size:13px;color:var(--muted)">${esc(s.nokp)} · ${esc(s.kelas||'')}</div>
       </div>
-      ${pct===100&&total>0?'<div style="color:var(--present);font-weight:700;padding:6px 2px 14px">✓ Kehadiran penuh — tiada masalah.</div>':''}
-      ${aRows.length?`<h3 style="font-size:14px;margin:6px 2px 8px">Butiran Tidak Hadir</h3>
-        <table class="rpt-table"><tr><th>Tarikh</th><th>Subjek</th><th>Masa</th><th>Cikgu (rekod)</th><th>Sebab</th></tr>
-        ${aRows.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.subject)}</td><td>${esc(fmtMasa(a.masa))}</td><td>${esc(a.cikgu)}</td><td><span class="pill">${esc(a.reason)}</span></td></tr>`).join('')}
-        </table><p class="legend" style="margin-top:6px">HEM boleh rujuk cikgu yang merekod sesi tersebut.</p>`
-        :(total>0?'':'<div class="empty" style="padding:16px">Tiada rekod tidak hadir.</div>')}
+      <div class="lap-head" style="margin:0 0 10px"><div class="field" style="flex:1"><label>Tapis ikut subjek</label><select id="pp-subj"><option value="">Semua subjek</option>${subjects.map(j=>`<option>${esc(j)}</option>`).join('')}</select></div></div>
+      <div id="pp-body"></div>
 
       <h3 style="font-size:14px;margin:18px 2px 8px">Hukuman / Tindakan HEM</h3>
       <div class="lap-head" style="margin:0 0 10px">
@@ -522,6 +558,25 @@ async function showProfil(s,backClass){
         ${d.note?`<div style="margin-top:4px;font-size:14px">${esc(d.note)}</div>`:''}
         <button class="hbtn" data-del="${d.id}" style="margin-top:8px;color:var(--absent);font-size:12px;padding:5px 10px">Padam</button></div>`).join(''):'<div class="empty" style="padding:16px">Tiada rekod hukuman.</div>'}</div>`;
 
+    const renderBody=()=>{
+      const sel=$('#pp-subj').value;
+      const rows=(sel?absAll.filter(a=>a.subject===sel):absAll).slice().sort((x,y)=>y.date.localeCompare(x.date));
+      const total=sel?(perSubjTotal[sel]||0):totalAll;
+      const absentN=rows.length, attended=Math.max(0,total-absentN), pct=total>0?Math.round(attended/total*100):100;
+      const pcol=pct>=90?'var(--present)':pct>=80?'var(--warn)':pct>=70?'#e8743b':'var(--absent)';
+      $('#pp-body').innerHTML=`
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+          <div style="width:80px;height:80px;border-radius:50%;display:grid;place-items:center;background:${pcol};color:#fff;font-size:23px;font-weight:800;flex:0 0 auto">${total>0?pct+'%':'—'}</div>
+          <div style="flex:1;min-width:150px;font-size:13px;color:var(--muted)">${sel?'Subjek: <b>'+esc(sel)+'</b>':'<b>Semua subjek</b>'}<br>${total>0?`Hadir ${attended}/${total} sesi · ${absentN} kali tidak hadir`:'Belum ada sesi direkod'}</div>
+        </div>
+        ${pct===100&&total>0?'<div style="color:var(--present);font-weight:700;padding:0 2px 12px">✓ Kehadiran penuh.</div>':''}
+        ${rows.length?`<table class="rpt-table"><tr><th>Tarikh</th><th>Subjek</th><th>Masa</th><th>Cikgu</th><th>Sebab</th></tr>
+          ${rows.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.subject)}</td><td>${esc(fmtMasa(a.masa))}</td><td>${esc(a.cikgu)}</td><td><span class="pill">${esc(a.reason)}</span></td></tr>`).join('')}
+          </table><p class="legend" style="margin-top:6px">HEM boleh rujuk cikgu yang merekod sesi tersebut.</p>`
+          :(total>0?'<div class="empty" style="padding:12px;color:var(--present)">✓ Tiada rekod tidak hadir.</div>':'<div class="empty" style="padding:12px">Belum ada sesi.</div>')}`;
+    };
+    renderBody();
+    $('#pp-subj').onchange=renderBody;
     if(backClass)$('#pp-back').onclick=()=>listByClass(backClass);
     $('#hk-add').onclick=async()=>{
       const action=$('#hk-action').value,note=$('#hk-note').value.trim();
