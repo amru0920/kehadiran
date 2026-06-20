@@ -88,6 +88,8 @@
   .drill tr.rep td{background:#fff5f3}
   .logo{object-fit:cover;overflow:hidden}
   img.logo{background:#fff}
+  .chart-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .chart-card h4{margin:0 0 2px;font-size:15px;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -131,6 +133,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 /* ===== KONFIGURASI ===== */
 const SUPABASE_URL  = "https://uxodkjkpwiyfxozgrnib.supabase.co";
@@ -301,6 +304,7 @@ async function importCSV(text){
 
 /* ===== LAPORAN & ANALISIS ===== */
 let RPT={month:null,from:'',to:'',sessions:[]};
+let charts=[];
 let teachersByIc={};
 
 async function renderData(){
@@ -317,6 +321,8 @@ async function renderData(){
       <button data-v="kekerapan">Kekerapan</button>
       <button data-v="kelas">Ikut Kelas</button>
       <button data-v="guru">Ikut Guru</button>
+      <button data-v="aktiviti">Aktiviti Guru</button>
+      <button data-v="carta">Carta</button>
       <button data-v="detail">Detail</button>
     </div>
     <div id="lp-out"><div class="empty">Pilih bulan, tekan <b>Jana</b>.</div></div>`;
@@ -464,6 +470,54 @@ function renderView(v){
         <table class="rpt-table"><tr><th>Kelas</th><th>Sesi</th><th>Tidak Hadir</th></tr>${clsRows}</table>
       </div>`;
     }).join('')+`<p class="legend" style="margin-top:8px">Dikumpulkan ikut akaun guru yang log masuk semasa merekod. Setiap guru dipecahkan ikut kelas mereka.</p>`;
+  }
+  else if(v==='aktiviti'){
+    const days=['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+    const byT={};
+    (RPT.sessions||[]).forEach(s=>{const ic=s.recorded_by||'?';(byT[ic]=byT[ic]||[]).push(s);});
+    const teachers=Object.entries(byT).sort((a,b)=>b[1].length-a[1].length);
+    if(!teachers.length){box.innerHTML='<div class="empty">Tiada rekod untuk tempoh ini.</div>';return;}
+    box.innerHTML=teachers.map(([ic,list])=>{
+      list.sort((a,b)=>a.date.localeCompare(b.date));
+      const rows=list.map(s=>{
+        const d=new Date(s.date+'T00:00:00');const hari=isNaN(d.getTime())?'-':days[d.getDay()];
+        return `<tr><td>${esc(s.date)}</td><td>${hari}</td><td>${esc(s.class_name)}</td><td>${esc(s.subject||'-')}</td><td>${esc((s.session_time||'').replace('-','\u2013'))}</td><td>${(s.absentees||[]).length}</td></tr>`;
+      }).join('');
+      return `<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px">
+          <b style="font-size:15px">${esc(tName(ic))}</b>
+          <span class="pill g">${list.length} kelas direkod</span>
+        </div>
+        <table class="rpt-table"><tr><th>Tarikh</th><th>Hari</th><th>Kelas</th><th>Subjek</th><th>Masa</th><th>Tak Hadir</th></tr>${rows}</table>
+      </div>`;
+    }).join('')+`<p class="legend" style="margin-top:8px">Setiap kelas tambahan yang guru ambil dalam ${esc(monthLabel())} \u2014 bila, hari, kelas &amp; subjek.</p>`;
+  }
+  else if(v==='carta'){
+    charts.forEach(ch=>{try{ch.destroy();}catch(e){}}); charts=[];
+    if(typeof Chart==='undefined'){box.innerHTML='<div class="empty">Carta gagal dimuat \u2014 perlu sambungan internet untuk muat pustaka carta.</div>';return;}
+    box.innerHTML=`
+      <div class="chart-card"><h4>Pecahan Sebab Tidak Hadir</h4><p class="legend">Berapa banyak ponteng sebenar vs sebab sah.</p><div style="height:240px"><canvas id="ch-reason"></canvas></div></div>
+      <div class="chart-card"><h4>Peratus Kehadiran Ikut Kelas</h4><p class="legend">Kelas mana paling perlu perhatian.</p><div style="height:260px"><canvas id="ch-class"></canvas></div></div>
+      <div class="chart-card"><h4>Ketidakhadiran Ikut Hari</h4><p class="legend">Corak hari \u2014 selalunya hari apa pelajar tidak hadir.</p><div style="height:260px"><canvas id="ch-day"></canvas></div></div>`;
+    // a) Pecahan sebab (donut)
+    const rc={}; C.entries.forEach(e=>{const base=(e.reason||'-').split(':')[0].trim()||'-';rc[base]=(rc[base]||0)+1;});
+    const rOrder=Object.entries(rc).sort((a,b)=>b[1]-a[1]);
+    const palette={'Ponteng':'#e0492f','Sekolah':'#2f5fe0','Dengan Kebenaran':'#1f9d6b'};
+    const extra=['#d98613','#8e44ad','#16a085','#c0392b'];let ei=0;
+    charts.push(new Chart($('#ch-reason'),{type:'doughnut',
+      data:{labels:rOrder.map(x=>x[0]),datasets:[{data:rOrder.map(x=>x[1]),backgroundColor:rOrder.map(x=>palette[x[0]]||extra[ei++%extra.length]),borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}}));
+    // b) Kehadiran % ikut kelas (bar)
+    const cls=Object.entries(C.perClass).map(([cn,x])=>{const sl=rosterCount(cn)*x.sessions;return{cn,pct:sl>0?Math.round((sl-x.absent)/sl*100):0};}).sort((a,b)=>a.pct-b.pct);
+    charts.push(new Chart($('#ch-class'),{type:'bar',
+      data:{labels:cls.map(c=>c.cn),datasets:[{label:'Kehadiran %',data:cls.map(c=>c.pct),backgroundColor:cls.map(c=>c.pct>=90?'#1f9d6b':c.pct>=80?'#d98613':c.pct>=70?'#e8743b':'#e0492f'),borderRadius:6}]},
+      options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:false}}}}));
+    // c) Tidak hadir ikut hari (bar)
+    const days=['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+    const dc=[0,0,0,0,0,0,0]; C.entries.forEach(e=>{const d=new Date(e.date+'T00:00:00');if(!isNaN(d.getTime()))dc[d.getDay()]++;});
+    charts.push(new Chart($('#ch-day'),{type:'bar',
+      data:{labels:days,datasets:[{label:'Kali tidak hadir',data:dc,backgroundColor:'#2f5fe0',borderRadius:6}]},
+      options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{precision:0}}},plugins:{legend:{display:false}}}}));
   }
   else if(v==='detail'){
     const rows=C.entries.sort((a,b)=>a.date.localeCompare(b.date)||a.kelas.localeCompare(b.kelas));

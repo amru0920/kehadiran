@@ -107,6 +107,8 @@
   .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--absent-soft);color:var(--absent)}
   .logo{object-fit:cover;overflow:hidden}
   img.logo{background:#fff}
+  .bersebab-input{width:100%;margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px}
+  .bersebab-input:focus{outline:none;border-color:var(--brand)}
 </style>
 </head>
 <body>
@@ -234,7 +236,7 @@ const emailToIc=em=>(em||'').split('@')[0];
 const fmtDate=iso=>new Date(iso+'T00:00').toLocaleDateString('ms-MY',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 
-const REASONS=['Ponteng','Sekolah'];
+const REASONS=['Ponteng','Sekolah','Dengan Kebenaran'];
 const state={teacher:null,students:[]};
 const current={kelas:null,date:null,subjek:null,roster:[],absent:{}};
 
@@ -402,7 +404,7 @@ function renderRoster(){
       <div class="srow"><span class="num">${i+1}.</span>
         <span class="who"><span class="name">${esc(s.name)}</span><br><span class="meta">${esc(s.nokp)} · ${esc(s.kelas||'')}</span></span>
         <button class="toggle" data-act="toggle">${ab?'Tidak Hadir':'Hadir'}</button></div>
-      ${ab?`<div class="reasons">${REASONS.map(r=>`<button class="chip ${rs===r?'on':''}" data-act="reason" data-r="${r}">${r}</button>`).join('')}</div>`:''}</div>`;
+      ${ab?`<div class="reasons">${REASONS.map(r=>{const on=r==='Dengan Kebenaran'?(rs||'').startsWith('Dengan Kebenaran'):rs===r;return `<button class="chip ${on?'on':''}" data-act="reason" data-r="${r}">${r}</button>`;}).join('')}</div>${(rs||'').startsWith('Dengan Kebenaran')?`<input class="bersebab-input" data-act="bersebab-note" placeholder="Nyatakan sebab (cth: Demam, urusan keluarga)" value="${esc(rs.replace(/^Dengan Kebenaran:?\s*/,''))}">`:''}`:''}</div>`;
   }).join('')||'<div class="empty"><strong>Tiada pelajar</strong>Kelas ini belum ada pelajar.</div>';
   const total=current.roster.length,tidak=Object.keys(current.absent).length;
   $('#stat-jumlah').textContent=total;$('#stat-tidak').textContent=tidak;$('#stat-hadir').textContent=total-tidak;
@@ -411,7 +413,13 @@ $('#roster').addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const id=e.target.closest('.student').dataset.id;
   if(b.dataset.act==='toggle'){current.absent[id]!==undefined?delete current.absent[id]:current.absent[id]=REASONS[0];renderRoster();}
-  if(b.dataset.act==='reason'){current.absent[id]=b.dataset.r;renderRoster();}
+  if(b.dataset.act==='reason'){const r=b.dataset.r;if(r==='Dengan Kebenaran'){if(!(current.absent[id]||'').startsWith('Dengan Kebenaran'))current.absent[id]='Dengan Kebenaran:';}else current.absent[id]=r;renderRoster();}
+});
+$('#roster').addEventListener('input',e=>{
+  const inp=e.target.closest('[data-act="bersebab-note"]');if(!inp)return;
+  const id=e.target.closest('.student').dataset.id;
+  const v=inp.value.trim();
+  current.absent[id]=v?('Dengan Kebenaran: '+v):'Dengan Kebenaran:';
 });
 $('#kelas').addEventListener('change',loadCurrent);
 $('#tarikh').addEventListener('change',loadCurrent);
