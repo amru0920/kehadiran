@@ -109,6 +109,11 @@
   img.logo{background:#fff}
   .bersebab-input{width:100%;margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px}
   .bersebab-input:focus{outline:none;border-color:var(--brand)}
+  .srow{cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .status{padding:7px 13px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;user-select:none}
+  .status.yes{background:#e8f6ee;color:var(--present)}
+  .status.no{background:#fdecea;color:var(--absent)}
+  .student.absent .srow{background:#fff7f5}
 </style>
 </head>
 <body>
@@ -401,9 +406,9 @@ function renderRoster(){
   $('#roster').innerHTML=current.roster.map((s,i)=>{
     const ab=current.absent[s.id]!==undefined,rs=current.absent[s.id];
     return `<div class="student ${ab?'absent':''}" data-id="${s.id}">
-      <div class="srow"><span class="num">${i+1}.</span>
+      <div class="srow" data-act="toggle"><span class="num">${i+1}.</span>
         <span class="who"><span class="name">${esc(s.name)}</span><br><span class="meta">${esc(s.nokp)} · ${esc(s.kelas||'')}</span></span>
-        <button class="toggle" data-act="toggle">${ab?'Tidak Hadir':'Hadir'}</button></div>
+        <span class="status ${ab?'no':'yes'}">${ab?'Tidak Hadir':'✓ Hadir'}</span></div>
       ${ab?`<div class="reasons">${REASONS.map(r=>{const on=r==='Dengan Kebenaran'?(rs||'').startsWith('Dengan Kebenaran'):rs===r;return `<button class="chip ${on?'on':''}" data-act="reason" data-r="${r}">${r}</button>`;}).join('')}</div>${(rs||'').startsWith('Dengan Kebenaran')?`<input class="bersebab-input" data-act="bersebab-note" placeholder="Nyatakan sebab (cth: Demam, urusan keluarga)" value="${esc(rs.replace(/^Dengan Kebenaran:?\s*/,''))}">`:''}`:''}</div>`;
   }).join('')||'<div class="empty"><strong>Tiada pelajar</strong>Kelas ini belum ada pelajar.</div>';
   const total=current.roster.length,tidak=Object.keys(current.absent).length;
@@ -475,7 +480,11 @@ async function renderDataBody(){
 }
 
 /* ===== PELAJAR: pilih kelas -> senarai -> profil + hukuman ===== */
-const ACTIONS=['Amaran Lisan','Surat Amaran Pertama','Surat Amaran Kedua','Gantung Sekolah','Rujuk Kaunseling','Denda / Khidmat','Lain-lain'];
+const HK_BASE=['Kerja Amal 1 jam','Kerja Amal 1 jam 30 minit'];
+const HK_ROTAN=['1 rotan di tapak tangan','2 rotan di tapak tangan','3 rotan di tapak tangan','1 rotan di punggung','2 rotan di punggung','3 rotan di punggung'];
+function icGender(nokp){const d=(nokp||'').replace(/\D/g,'');if(d.length<12)return null;return parseInt(d[11],10)%2===0?'F':'M';}
+function actionsFor(nokp){return icGender(nokp)==='F'?HK_BASE.slice():HK_BASE.concat(HK_ROTAN);}
+function rotanNote(nokp){const g=icGender(nokp);return g==='F'?'Murid perempuan — pilihan rotan disembunyikan mengikut polisi.':'⚠️ Murid perempuan tidak boleh dirotan.';}
 const tName=ic=>(state.teachersByIc&&state.teachersByIc[ic])||(ic?ic:'(Tidak direkod)');
 const allClassList=()=>[...new Set(state.students.map(s=>s.kelas).filter(Boolean))].sort();
 function renderPelajar(){
@@ -557,10 +566,11 @@ async function showProfil(s,backClass){
 
       <h3 style="font-size:14px;margin:18px 2px 8px">Hukuman / Tindakan HEM</h3>
       <div class="lap-head" style="margin:0 0 10px">
-        <div class="field"><label>Tindakan</label><select id="hk-action">${ACTIONS.map(a=>`<option>${a}</option>`).join('')}</select></div>
+        <div class="field"><label>Tindakan</label><select id="hk-action">${actionsFor(s.nokp).map(a=>`<option>${a}</option>`).join('')}</select></div>
         <div class="field" style="flex:2;min-width:180px"><label>Catatan (pilihan)</label><input type="text" id="hk-note" placeholder="Butiran tambahan"></div>
         <button class="btn btn-primary" id="hk-add">Rekod Hukuman</button>
       </div>
+      <p class="legend" style="margin:2px 2px 8px">${rotanNote(s.nokp)}</p>
       <div id="hk-list">${disc.length?disc.map(d=>`<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>${esc(d.action)}</b><span style="font-size:12px;color:var(--muted)">${esc((d.created_at||'').slice(0,10))}${d.recorded_name?' · '+esc(d.recorded_name):''}</span></div>
         ${d.note?`<div style="margin-top:4px;font-size:14px">${esc(d.note)}</div>`:''}
@@ -655,4 +665,4 @@ document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>
 boot();
 </script>
 </body>
-</html>
+</html>   
