@@ -114,6 +114,9 @@
   .status.yes{background:#e8f6ee;color:var(--present)}
   .status.no{background:#fdecea;color:var(--absent)}
   .student.absent .srow{background:#fff7f5}
+  .status.na{background:#eef0f4;color:#6b7585}
+  .student.na .srow{background:#f7f8fa}
+  .student.na .name{color:#6b7585}
 </style>
 </head>
 <body>
@@ -242,6 +245,7 @@ const fmtDate=iso=>new Date(iso+'T00:00').toLocaleDateString('ms-MY',{weekday:'s
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 
 const REASONS=['Ponteng','Sekolah','Dengan Kebenaran'];
+const NA='Tidak Berkenaan';
 const state={teacher:null,students:[]};
 const current={kelas:null,date:null,subjek:null,roster:[],absent:{}};
 
@@ -404,20 +408,24 @@ async function loadCurrent(){
 }
 function renderRoster(){
   $('#roster').innerHTML=current.roster.map((s,i)=>{
-    const ab=current.absent[s.id]!==undefined,rs=current.absent[s.id];
-    return `<div class="student ${ab?'absent':''}" data-id="${s.id}">
+    const v=current.absent[s.id];
+    const isNA=v===NA, ab=v!==undefined&&!isNA, rs=ab?v:'';
+    const cls=isNA?'na':(ab?'absent':'');
+    const badge=isNA?`<span class="status na">Tidak Berkenaan</span>`:(ab?`<span class="status no">Tidak Hadir</span>`:`<span class="status yes">✓ Hadir</span>`);
+    return `<div class="student ${cls}" data-id="${s.id}">
       <div class="srow" data-act="toggle"><span class="num">${i+1}.</span>
         <span class="who"><span class="name">${esc(s.name)}</span><br><span class="meta">${esc(s.nokp)} · ${esc(s.kelas||'')}</span></span>
-        <span class="status ${ab?'no':'yes'}">${ab?'Tidak Hadir':'✓ Hadir'}</span></div>
+        ${badge}</div>
       ${ab?`<div class="reasons">${REASONS.map(r=>{const on=r==='Dengan Kebenaran'?(rs||'').startsWith('Dengan Kebenaran'):rs===r;return `<button class="chip ${on?'on':''}" data-act="reason" data-r="${r}">${r}</button>`;}).join('')}</div>${(rs||'').startsWith('Dengan Kebenaran')?`<input class="bersebab-input" data-act="bersebab-note" placeholder="Nyatakan sebab (cth: Demam, urusan keluarga)" value="${esc(rs.replace(/^Dengan Kebenaran:?\s*/,''))}">`:''}`:''}</div>`;
   }).join('')||'<div class="empty"><strong>Tiada pelajar</strong>Kelas ini belum ada pelajar.</div>';
-  const total=current.roster.length,tidak=Object.keys(current.absent).length;
-  $('#stat-jumlah').textContent=total;$('#stat-tidak').textContent=tidak;$('#stat-hadir').textContent=total-tidak;
+  let tidak=0,na=0;Object.values(current.absent).forEach(v=>{if(v===NA)na++;else tidak++;});
+  const total=current.roster.length;
+  $('#stat-jumlah').textContent=total;$('#stat-tidak').textContent=tidak;$('#stat-hadir').textContent=total-tidak-na;
 }
 $('#roster').addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const id=e.target.closest('.student').dataset.id;
-  if(b.dataset.act==='toggle'){current.absent[id]!==undefined?delete current.absent[id]:current.absent[id]=REASONS[0];renderRoster();}
+  if(b.dataset.act==='toggle'){const v=current.absent[id];if(v===undefined)current.absent[id]=REASONS[0];else if(v!==NA)current.absent[id]=NA;else delete current.absent[id];renderRoster();}
   if(b.dataset.act==='reason'){const r=b.dataset.r;if(r==='Dengan Kebenaran'){if(!(current.absent[id]||'').startsWith('Dengan Kebenaran'))current.absent[id]='Dengan Kebenaran:';}else current.absent[id]=r;renderRoster();}
 });
 $('#roster').addEventListener('input',e=>{
@@ -455,7 +463,7 @@ async function renderDataBody(){
     const results=await Promise.all(cls.map(c=>DB.sessionsByClass(c,from,to)));
     const rows=cls.map((cn,i)=>{
       const ss=results[i];const students=rosterFor(cn).length;
-      let absent=0;ss.forEach(s=>absent+=(s.absentees||[]).length);
+      let absent=0;ss.forEach(s=>absent+=(s.absentees||[]).filter(a=>a.reason!==NA).length);
       const slots=students*ss.length;
       return{cn,students,sessions:ss.length,absent,rate:slots>0?((slots-absent)/slots*100):null};
     }).sort((a,b)=>{if(a.rate===null)return 1;if(b.rate===null)return -1;return a.rate-b.rate;});
@@ -468,7 +476,7 @@ async function renderDataBody(){
     }).join('')||'<div class="empty">Tiada sesi dalam tempoh ini.</div>';
     // Kekerapan tidak hadir (pelajar yang sama)
     const perStu={};
-    results.flat().forEach(s=>(s.absentees||[]).forEach(a=>{const st=a.students||{};const id=st.nokp||st.name;
+    results.flat().forEach(s=>(s.absentees||[]).forEach(a=>{if(a.reason===NA)return;const st=a.students||{};const id=st.nokp||st.name;
       perStu[id]=perStu[id]||{name:st.name||'-',nokp:st.nokp||'',count:0,reasons:{}};
       perStu[id].count++;perStu[id].reasons[a.reason]=(perStu[id].reasons[a.reason]||0)+1;}));
     const ku=Object.values(perStu).sort((a,b)=>b.count-a.count);
@@ -519,10 +527,10 @@ async function listByClass(kelas){
   $('#pp-out').innerHTML='<div class="empty">Memuat…</div>';
   let total=0; const absCount={};
   try{
-    const {data,error}=await sb.from('attendance_sessions').select('absentees(student_id)').eq('class_name',kelas);
+    const {data,error}=await sb.from('attendance_sessions').select('absentees(student_id,reason)').eq('class_name',kelas);
     if(error)throw error;
     total=(data||[]).length;
-    (data||[]).forEach(s=>(s.absentees||[]).forEach(a=>{absCount[a.student_id]=(absCount[a.student_id]||0)+1;}));
+    (data||[]).forEach(s=>(s.absentees||[]).forEach(a=>{if(a.reason===NA)return;absCount[a.student_id]=(absCount[a.student_id]||0)+1;}));
   }catch(e){/* kalau gagal, papar tanpa tanda */}
   const info=id=>{const ab=absCount[id]||0; if(ab<=0)return null; return {absent:ab, pct: total>0?Math.round((total-ab)/total*100):null};};
   const absentN=list.filter(s=>absCount[s.id]).length;
@@ -554,8 +562,9 @@ async function showProfil(s,backClass){
     const perSubjTotal={};
     sessions.forEach(x=>{const j=x.subject||'(tiada subjek)';perSubjTotal[j]=(perSubjTotal[j]||0)+1;});
     const subjects=Object.keys(perSubjTotal).sort();
-    const absAll=abs.map(a=>({date:a.attendance_sessions?.date||'-',subject:a.attendance_sessions?.subject||'(tiada subjek)',masa:a.attendance_sessions?.session_time||'',cikgu:tName(a.attendance_sessions?.recorded_by),reason:a.reason}));
+    const absAll=abs.filter(a=>a.reason!==NA).map(a=>({date:a.attendance_sessions?.date||'-',subject:a.attendance_sessions?.subject||'(tiada subjek)',masa:a.attendance_sessions?.session_time||'',cikgu:tName(a.attendance_sessions?.recorded_by),reason:a.reason}));
     const back=backClass?`<button class="btn btn-ghost" id="pp-back" style="margin-bottom:10px">← Senarai ${esc(backClass)}</button>`:'';
+    const isAdmin=!!state.teacher?.is_admin;
     $('#pp-out').innerHTML=`${back}
       <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow)">
         <div style="font-size:18px;font-weight:800">${esc(s.name)}</div>
@@ -565,16 +574,17 @@ async function showProfil(s,backClass){
       <div id="pp-body"></div>
 
       <h3 style="font-size:14px;margin:18px 2px 8px">Hukuman / Tindakan HEM</h3>
-      <div class="lap-head" style="margin:0 0 10px">
+      ${isAdmin?`<div class="lap-head" style="margin:0 0 10px">
         <div class="field"><label>Tindakan</label><select id="hk-action">${actionsFor(s.nokp).map(a=>`<option>${a}</option>`).join('')}</select></div>
         <div class="field" style="flex:2;min-width:180px"><label>Catatan (pilihan)</label><input type="text" id="hk-note" placeholder="Butiran tambahan"></div>
         <button class="btn btn-primary" id="hk-add">Rekod Hukuman</button>
       </div>
-      <p class="legend" style="margin:2px 2px 8px">${rotanNote(s.nokp)}</p>
+      <p class="legend" style="margin:2px 2px 8px">${rotanNote(s.nokp)}</p>`
+      :`<p class="legend" style="margin:2px 2px 10px">🔒 Hukuman direkod oleh HEM/pentadbir sahaja. Cikgu hanya boleh lihat rekod.</p>`}
       <div id="hk-list">${disc.length?disc.map(d=>`<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)">
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>${esc(d.action)}</b><span style="font-size:12px;color:var(--muted)">${esc((d.created_at||'').slice(0,10))}${d.recorded_name?' · '+esc(d.recorded_name):''}</span></div>
         ${d.note?`<div style="margin-top:4px;font-size:14px">${esc(d.note)}</div>`:''}
-        <button class="hbtn" data-del="${d.id}" style="margin-top:8px;color:var(--absent);font-size:12px;padding:5px 10px">Padam</button></div>`).join(''):'<div class="empty" style="padding:16px">Tiada rekod hukuman.</div>'}</div>`;
+        ${isAdmin?`<button class="hbtn" data-del="${d.id}" style="margin-top:8px;color:var(--absent);font-size:12px;padding:5px 10px">Padam</button>`:''}</div>`).join(''):'<div class="empty" style="padding:16px">Tiada rekod hukuman.</div>'}</div>`;
 
     const renderBody=()=>{
       const sel=$('#pp-subj').value;
@@ -596,12 +606,14 @@ async function showProfil(s,backClass){
     renderBody();
     $('#pp-subj').onchange=renderBody;
     if(backClass)$('#pp-back').onclick=()=>listByClass(backClass);
-    $('#hk-add').onclick=async()=>{
-      const action=$('#hk-action').value,note=$('#hk-note').value.trim();
-      try{await DB.addDiscipline({student_nokp:s.nokp,student_name:s.name,class_name:s.kelas,action,note,recorded_by:state.teacher?.ic||null,recorded_name:state.teacher?.name||null});
-        toast('Hukuman direkod ✓');showProfil(s,backClass);}catch(e){toast('Ralat: '+e.message);}
-    };
-    $('#hk-list').onclick=async e=>{const b=e.target.closest('[data-del]');if(!b)return;if(confirm('Padam rekod hukuman ini?')){try{await DB.delDiscipline(b.dataset.del);showProfil(s,backClass);toast('Dipadam');}catch(e){toast('Ralat: '+e.message);}}};
+    if(isAdmin){
+      $('#hk-add').onclick=async()=>{
+        const action=$('#hk-action').value,note=$('#hk-note').value.trim();
+        try{await DB.addDiscipline({student_nokp:s.nokp,student_name:s.name,class_name:s.kelas,action,note,recorded_by:state.teacher?.ic||null,recorded_name:state.teacher?.name||null});
+          toast('Hukuman direkod ✓');showProfil(s,backClass);}catch(e){toast('Ralat: '+e.message);}
+      };
+      $('#hk-list').onclick=async e=>{const b=e.target.closest('[data-del]');if(!b)return;if(confirm('Padam rekod hukuman ini?')){try{await DB.delDiscipline(b.dataset.del);showProfil(s,backClass);toast('Dipadam');}catch(e){toast('Ralat: '+e.message);}}};
+    }
   }catch(e){$('#pp-out').innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';}
 }
 
@@ -665,4 +677,4 @@ document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>
 boot();
 </script>
 </body>
-</html>   
+</html>

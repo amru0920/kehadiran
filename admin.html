@@ -304,6 +304,7 @@ async function importCSV(text){
 
 /* ===== LAPORAN & ANALISIS ===== */
 let RPT={month:null,from:'',to:'',sessions:[]};
+const NA='Tidak Berkenaan';
 let charts=[];
 let teachersByIc={};
 
@@ -375,6 +376,7 @@ function computeRPT(){
     perTeacher[tk]=perTeacher[tk]||{sessions:0,absent:0};
     perTeacher[tk].sessions++;
     (s.absentees||[]).forEach(a=>{
+      if(a.reason===NA)return;
       const st=a.students||{}; const id=st.id||(st.nokp||Math.random());
       entries.push({date:s.date,kelas:s.class_name,subject:s.subject||'-',masa:s.session_time||'',reason:a.reason,name:st.name||'-',nokp:st.nokp||''});
       perStudent[id]=perStudent[id]||{name:st.name||'-',nokp:st.nokp||'',kelas:st.kelas||'',count:0,reasons:{}};
@@ -481,7 +483,7 @@ function renderView(v){
       list.sort((a,b)=>a.date.localeCompare(b.date));
       const rows=list.map(s=>{
         const d=new Date(s.date+'T00:00:00');const hari=isNaN(d.getTime())?'-':days[d.getDay()];
-        return `<tr><td>${esc(s.date)}</td><td>${hari}</td><td>${esc(s.class_name)}</td><td>${esc(s.subject||'-')}</td><td>${esc((s.session_time||'').replace('-','\u2013'))}</td><td>${(s.absentees||[]).length}</td></tr>`;
+        return `<tr><td>${esc(s.date)}</td><td>${hari}</td><td>${esc(s.class_name)}</td><td>${esc(s.subject||'-')}</td><td>${esc((s.session_time||'').replace('-','\u2013'))}</td><td>${(s.absentees||[]).filter(a=>a.reason!==NA).length}</td></tr>`;
       }).join('');
       return `<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px">
@@ -532,7 +534,11 @@ function renderView(v){
 
 /* ===== NAV ===== */
 /* ===== HUKUMAN (pelajar ponteng -> profil + tindakan HEM/cikgu) ===== */
-const HK_ACTIONS=['Amaran Lisan','Surat Amaran Pertama','Surat Amaran Kedua','Gantung Sekolah','Rujuk Kaunseling','Denda / Khidmat','Lain-lain'];
+const HK_BASE=['Kerja Amal 1 jam','Kerja Amal 1 jam 30 minit'];
+const HK_ROTAN=['1 rotan di tapak tangan','2 rotan di tapak tangan','3 rotan di tapak tangan','1 rotan di punggung','2 rotan di punggung','3 rotan di punggung'];
+function icGender(nokp){const d=(nokp||'').replace(/\D/g,'');if(d.length<12)return null;return parseInt(d[11],10)%2===0?'F':'M';}
+function actionsFor(nokp){return icGender(nokp)==='F'?HK_BASE.slice():HK_BASE.concat(HK_ROTAN);}
+function rotanNote(nokp){const g=icGender(nokp);return g==='F'?'Murid perempuan — pilihan rotan disembunyikan mengikut polisi.':'\u26a0\ufe0f Murid perempuan tidak boleh dirotan.';}
 const fmtMasa=t=>{if(!t)return '';const[a,b]=t.split('-');return b?`${a}\u2013${b}`:a;};
 async function renderHukuman(){
   await loadStudents();
@@ -550,7 +556,7 @@ async function hkAbsentStudents(kelas){
   const {data,error}=await sb.from('attendance_sessions').select('absentees(reason,students(id,name,nokp,kelas))').eq('class_name',kelas);
   if(error)throw error;
   const map={};
-  (data||[]).forEach(s=>(s.absentees||[]).forEach(a=>{const st=a.students;if(!st)return;
+  (data||[]).forEach(s=>(s.absentees||[]).forEach(a=>{if(a.reason===NA)return;const st=a.students;if(!st)return;
     map[st.id]=map[st.id]||{...st,count:0};map[st.id].count++;}));
   return Object.values(map).sort((a,b)=>b.count-a.count);
 }
@@ -588,12 +594,12 @@ async function hkProfil(d){
     ]);
     if(absR.error)throw absR.error; if(discR.error)throw discR.error;
     const abs=absR.data||[], disc=discR.data||[];
-    const aRows=abs.map(a=>({date:a.attendance_sessions?.date||'-',subject:a.attendance_sessions?.subject||'-',masa:a.attendance_sessions?.session_time||'',cikgu:tName(a.attendance_sessions?.recorded_by||'?'),reason:a.reason})).sort((x,y)=>y.date.localeCompare(x.date));
+    const aRows=abs.filter(a=>a.reason!==NA).map(a=>({date:a.attendance_sessions?.date||'-',subject:a.attendance_sessions?.subject||'-',masa:a.attendance_sessions?.session_time||'',cikgu:tName(a.attendance_sessions?.recorded_by||'?'),reason:a.reason})).sort((x,y)=>y.date.localeCompare(x.date));
     box.innerHTML=`<button class="btn btn-ghost" id="hk-back" style="margin-bottom:10px">\u2190 Kembali</button>
       <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)">
         <div style="font-size:17px;font-weight:800">${esc(d.name)}</div>
         <div style="font-size:13px;color:var(--muted)">${esc(d.nokp)} \u00b7 ${esc(d.kelas)}</div>
-        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><span class="pill" style="background:var(--absent-soft);color:var(--absent)">${abs.length} kali tidak hadir</span><span class="pill g">${disc.length} rekod hukuman</span></div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><span class="pill" style="background:var(--absent-soft);color:var(--absent)">${abs.filter(a=>a.reason!==NA).length} kali tidak hadir</span><span class="pill g">${disc.length} rekod hukuman</span></div>
       </div>
       <h4 style="margin:6px 2px 8px;color:var(--brand)">Butiran Tidak Hadir</h4>
       ${aRows.length?`<table class="rpt-table"><tr><th>Tarikh</th><th>Subjek</th><th>Masa</th><th>Cikgu (rekod)</th><th>Sebab</th></tr>
@@ -601,10 +607,11 @@ async function hkProfil(d){
         </table>`:'<div class="empty" style="padding:12px">Tiada rekod.</div>'}
       <h4 style="margin:18px 2px 8px;color:var(--brand)">Hukuman / Tindakan</h4>
       <div class="addrow">
-        <select id="hk-action">${HK_ACTIONS.map(a=>`<option>${a}</option>`).join('')}</select>
+        <select id="hk-action">${actionsFor(d.nokp).map(a=>`<option>${a}</option>`).join('')}</select>
         <input type="text" id="hk-note" placeholder="Catatan (pilihan)">
         <button class="btn btn-primary" id="hk-add">Rekod Hukuman</button>
       </div>
+      <p class="legend" style="margin:4px 2px">${rotanNote(d.nokp)}</p>
       <div id="hk-disc" style="margin-top:8px">${disc.length?disc.map(x=>`<div class="item"><span class="grow"><span class="nm">${esc(x.action)}</span><br><span class="sub">${esc((x.created_at||'').slice(0,10))}${x.recorded_name?' \u00b7 '+esc(x.recorded_name):''}${x.note?' \u00b7 '+esc(x.note):''}</span></span><button class="icon-btn danger" data-del="${x.id}">Padam</button></div>`).join(''):'<div class="sub">Tiada rekod hukuman.</div>'}</div>`;
 
     $('#hk-back').onclick=()=>{const k=$('#hk-kelas').value;if(k)hkListByClass(k);else hkSearch();};
