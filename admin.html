@@ -193,7 +193,16 @@ $('#btn-logout').onclick=async()=>{await sb.auth.signOut();location.reload();};
 function enterApp(){ const ls=$('#login-screen'); ls.style.display='none'; ls.classList.add('hidden'); $('#app').classList.remove('hidden'); window.scrollTo(0,0); renderGuru(); }
 
 const classesFromStudents=()=>[...new Set(cache.students.map(s=>s.kelas).filter(Boolean))].sort();
-async function loadStudents(){ const {data,error}=await sb.from('students').select('*').order('name'); if(error)throw error; cache.students=data; }
+async function loadStudents(){ const {data,error}=await sb.from('students').select('*').order('name'); if(error)throw error; cache.students=data;
+  try{ const g=await sb.from('groups').select('name, group_members(student_id)'); cache.groupSize={}; (g.data||[]).forEach(x=>{cache.groupSize[x.name]=(x.group_members||[]).length;}); }catch(e){ cache.groupSize=cache.groupSize||{}; } }
+const isGroup=cn=>!!(cache.groupSize&&cache.groupSize[cn]!=null);
+const groupBadge=cn=>isGroup(cn)?' <span class="pill g" style="font-size:10px">KUMPULAN</span>':'';
+function classOptGroups(){
+  let h='<optgroup label="Kelas Tingkatan">'+classesFromStudents().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')+'</optgroup>';
+  const gs=Object.keys(cache.groupSize||{}).sort();
+  if(gs.length) h+='<optgroup label="Kumpulan Kelas Tambahan">'+gs.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('')+'</optgroup>';
+  return h;
+}
 
 /* ===== GURU ===== */
 async function renderGuru(){
@@ -332,7 +341,7 @@ async function renderData(){
   try{ await loadStudents(); const {data}=await sb.from('teachers').select('ic,name,class_name'); teachersByIc={}; (data||[]).forEach(t=>teachersByIc[t.ic]=t); }catch(e){}
   const now=new Date();
   $('#lp-month').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  $('#lp-class').innerHTML='<option value="">Semua kelas</option>'+classesFromStudents().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  $('#lp-class').innerHTML='<option value="">Semua kelas &amp; kumpulan</option>'+classOptGroups();
   $('#lp-go').onclick=lpFetch;
   $('#lp-print').onclick=()=>window.print();
   $('#lp-del').onclick=lpDelete;
@@ -388,7 +397,7 @@ function computeRPT(){
   });
   return {perStudent,perClass,perTeacher,entries};
 }
-const rosterCount=cn=>cache.students.filter(s=>s.kelas===cn).length;
+const rosterCount=cn=>(cache.groupSize&&cache.groupSize[cn]!=null)?cache.groupSize[cn]:cache.students.filter(s=>s.kelas===cn).length;
 const tName=ic=>ic==='?'?'(Tidak direkod)':(teachersByIc[ic]?.name||ic);
 const monthLabel=()=>{const d=new Date(RPT.from);return d.toLocaleDateString('ms-MY',{month:'long',year:'numeric'});};
 
@@ -433,7 +442,7 @@ function renderView(v){
       ${gauges.map(r=>{const col=r.rate===null?'#9aa3b2':r.rate<80?'var(--absent)':r.rate<90?'var(--warn)':'var(--present)';const lb=r.rate===null?'—':Math.round(r.rate)+'%';
         return `<div class="dcard" data-drill="${esc(r.cn)}" style="cursor:pointer">
           <div class="gauge" style="background:${col}">${lb}</div>
-          <div class="info"><div class="cn">${esc(r.cn)} <span style="font-size:11px;color:var(--muted)">▼ tekan</span></div>
+          <div class="info"><div class="cn">${esc(r.cn)}${groupBadge(r.cn)} <span style="font-size:11px;color:var(--muted)">▼ tekan</span></div>
           <div class="det">${rosterCount(r.cn)} pelajar · ${r.sessions} sesi · ${r.absent} kali tidak hadir</div></div></div>
           <div class="drill hidden" data-drillpanel="${esc(r.cn)}"></div>`;}).join('')}`;
   }
@@ -448,7 +457,7 @@ function renderView(v){
     const rows=Object.entries(C.perClass).map(([cn,x])=>{const sl=rosterCount(cn)*x.sessions;const r=sl>0?(sl-x.absent)/sl*100:null;return{cn,...x,rate:r};}).sort((a,b)=>(a.rate??999)-(b.rate??999));
     box.innerHTML=`<table class="rpt-table"><tr><th>Kelas</th><th>Sesi</th><th>Tidak Hadir</th><th>Kehadiran</th></tr>
       ${rows.map(r=>{const cls=r.rate===null?'':r.rate<80?'pill':r.rate<90?'pill w':'pill g';const lb=r.rate===null?'—':Math.round(r.rate)+'%';
-        return `<tr><td><b>${esc(r.cn)}</b></td><td>${r.sessions}</td><td>${r.absent}</td><td><span class="${cls}">${lb}</span></td></tr>`;}).join('')}
+        return `<tr><td><b>${esc(r.cn)}</b>${groupBadge(r.cn)}</td><td>${r.sessions}</td><td>${r.absent}</td><td><span class="${cls}">${lb}</span></td></tr>`;}).join('')}
     </table>`;
   }
   else if(v==='guru'){
@@ -615,7 +624,7 @@ async function renderHukuman(){
   const cls=classesFromStudents();
   $('#tab-hukuman').innerHTML=`<div class="card"><h3>Hukuman / Tindakan Pelajar</h3>
     <p class="legend">Pilih kelas \u2014 hanya pelajar yang <b>pernah tidak hadir</b> akan keluar. Tekan nama untuk rekod/kemaskini hukuman.</p>
-    <div class="addrow"><select id="hk-kelas"><option value="">\u2014 Pilih kelas \u2014</option>${cls.map(c=>`<option>${esc(c)}</option>`).join('')}</select>
+    <div class="addrow"><select id="hk-kelas"><option value="">\u2014 Pilih kelas / kumpulan \u2014</option>${classOptGroups()}</select>
       <input type="text" id="hk-q" placeholder="\ud83d\udd0d Atau cari nama pelajar"></div>
     <div id="hk-out" style="margin-top:8px"><div class="sub">Pilih kelas untuk mula.</div></div></div>`;
   $('#hk-kelas').onchange=()=>{$('#hk-q').value='';hkListByClass($('#hk-kelas').value);};
