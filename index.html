@@ -1,148 +1,680 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Semak Email Pelajar</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Kehadiran Kelas Tambahan</title>
+<meta property="og:title" content="Sistem Kehadiran Kelas Tambahan">
+<meta property="og:description" content="SMK Batu Maung — rekod kehadiran pelajar, laporan & analisis kekerapan tidak hadir.">
+<meta property="og:image" content="https://kehadiran-f2u.pages.dev/og.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kehadiran-f2u.pages.dev/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sistem Kehadiran Kelas Tambahan">
+<meta name="twitter:image" content="https://kehadiran-f2u.pages.dev/og.png">
 
-<!-- ===== Link preview (Open Graph) ===== -->
-<meta property="og:type" content="website" />
-<meta property="og:title" content="Semak Email Pelajar" />
-<meta property="og:description" content="Masukkan No. IC untuk dapatkan email pelajar anda." />
-<meta property="og:image" content="https://email-student.pages.dev/preview.png" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://email-student.pages.dev" />
-<meta property="og:site_name" content="Semak Email Pelajar" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Semak Email Pelajar" />
-<meta name="twitter:description" content="Masukkan No. IC untuk dapatkan email pelajar anda." />
-<meta name="twitter:image" content="https://email-student.pages.dev/preview.png" />
-<meta name="theme-color" content="#0d1117" />
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0d1117; --panel: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #8b949e; --accent: #2f81f7;
-    --accent-hover: #4493f8; --green: #3fb950; --red: #f85149;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg); color: var(--text); min-height: 100vh;
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .card {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-    padding: 32px 28px; width: 100%; max-width: 420px; box-shadow: 0 8px 30px rgba(0,0,0,.4);
-  }
-  h1 { font-size: 20px; margin-bottom: 6px; }
-  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; line-height: 1.5; }
-  label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
-  input {
-    width: 100%; padding: 11px 13px; background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-size: 15px; margin-bottom: 16px; transition: border-color .15s;
-  }
-  input:focus { outline: none; border-color: var(--accent); }
-  button {
-    width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none;
-    border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .15s;
-  }
-  button:hover:not(:disabled) { background: var(--accent-hover); }
-  button:disabled { opacity: .55; cursor: not-allowed; }
-  .msg { font-size: 13px; margin-top: 14px; padding: 10px 12px; border-radius: 8px; display: none; line-height: 1.5; }
-  .msg.error { display: block; background: rgba(248,81,73,.12); color: var(--red); border: 1px solid rgba(248,81,73,.3); }
-  .result { display: none; margin-top: 20px; padding: 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; }
-  .result.show { display: block; }
-  .result .name { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
-  .result .field-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-  .result .email-row { display: flex; gap: 8px; align-items: center; }
-  .result .email {
-    flex: 1; font-size: 15px; font-weight: 600; word-break: break-all;
-    background: var(--panel); padding: 10px 12px; border-radius: 7px; border: 1px solid var(--border);
-  }
-  .copy-btn { width: auto; padding: 10px 14px; font-size: 13px; white-space: nowrap; background: var(--green); }
-  .copy-btn:hover:not(:disabled) { background: #46c75a; }
-  .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation: spin .6s linear infinite; vertical-align: -2px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 20px; }
+  :root{--bg:#f5f6f8;--surface:#fff;--ink:#1a2230;--muted:#6b7585;--line:#e6e9ef;
+    --brand:#2f5fe0;--brand-dark:#214bc0;--absent:#e0492f;--absent-soft:#fdece9;--present:#1f9d6b;
+    --warn:#d98613;--radius:14px;--shadow:0 1px 2px rgba(20,30,50,.06),0 8px 24px rgba(20,30,50,.06)}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45}
+  .wrap{max-width:780px;margin:0 auto;padding:0 16px 120px}
+  .hidden{display:none!important}
+
+  .auth-screen{min-height:100vh;display:grid;place-items:center;padding:20px}
+  .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:var(--shadow)}
+  .auth-card .logo{width:48px;height:48px;border-radius:12px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800;margin-bottom:16px}
+  .auth-card h2{margin:0 0 4px;font-size:20px}.auth-card p{margin:0 0 20px;font-size:13px;color:var(--muted)}
+  .auth-card label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+  .auth-card input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px}
+  .auth-card input:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  .auth-note{font-size:12px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.5}
+
+  header.app{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+  .head-inner{max-width:780px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+  .logo{width:36px;height:36px;border-radius:10px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;flex:none}
+  .head-inner h1{font-size:15px;margin:0;font-weight:700}.head-inner p{margin:0;font-size:12px;color:var(--muted)}
+  .head-inner .sp{flex:1}
+  .hbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:13px;padding:7px 13px;border-radius:9px;cursor:pointer;text-decoration:none;display:inline-block}
+  .tabs{display:flex;gap:4px;max-width:780px;margin:0 auto;padding:0 12px}
+  .tab{flex:1;padding:11px;border:0;background:none;font:inherit;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent}
+  .tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+
+  .context{display:flex;gap:10px;margin:16px 0 8px;flex-wrap:wrap}
+  .field{flex:1;min-width:130px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  select,input[type=date],input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px;background:var(--surface);color:var(--ink)}
+  select:focus,input:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:var(--brand)}
+
+  .summary{display:flex;gap:10px;margin:14px 0}
+  .stat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+  .stat .n{font-size:24px;font-weight:800}.stat .l{font-size:12px;color:var(--muted);font-weight:600}
+  .stat.absent .n{color:var(--absent)}.stat.present .n{color:var(--present)}
+  .hint{font-size:13px;color:var(--muted);margin:4px 2px 12px}
+
+  .roster{display:flex;flex-direction:column;gap:8px}
+  .student{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);transition:.12s}
+  .student.absent{border-color:var(--absent);background:#fff7f5}
+  .srow{display:flex;align-items:center;gap:12px}
+  .num{width:26px;color:var(--muted);font-size:13px;font-weight:600;flex:none}
+  .who{flex:1;min-width:0}.who .name{font-weight:600}.who .meta{font-size:12px;color:var(--muted);font-weight:500}
+  .toggle{border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:700;font-size:13px;padding:8px 14px;border-radius:999px;cursor:pointer;flex:none}
+  .student.absent .toggle{background:var(--absent);border-color:var(--absent);color:#fff}
+  .reasons{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+  .savebar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px;z-index:30}
+  .savebar .inner{max-width:780px;margin:0 auto;display:flex;gap:12px;align-items:center}
+  .save-info{flex:1;font-size:13px;color:var(--muted)}
+  .btn{border:0;border-radius:11px;padding:12px 20px;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:active{background:var(--brand-dark)}
+  .btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  /* Data */
+  .dcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:8px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px}
+  .dcard .gauge{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;flex:none;color:#fff}
+  .dcard .info{flex:1;min-width:0}.dcard .cn{font-weight:700}.dcard .det{font-size:12px;color:var(--muted)}
+  .legend{font-size:12px;color:var(--muted);margin:12px 2px 10px}.legend b{color:var(--ink)}
+
+  /* Laporan */
+  .lap-head{display:flex;gap:10px;align-items:flex-end;margin:16px 0 10px;flex-wrap:wrap}
+  .lap-head .field{min-width:140px}
+  .rpt-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .rpt-card h4{margin:0 0 6px;font-size:14px;font-weight:700}
+  .rpt-card .sub{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .rpt-table{width:100%;border-collapse:collapse;font-size:13px}
+  .rpt-table th{text-align:left;padding:7px 10px;background:var(--bg);font-weight:700;font-size:12px;color:var(--muted)}
+  .rpt-table td{padding:8px 10px;border-top:1px solid var(--line)}
+  .badge-reason{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--absent-soft);color:var(--absent)}
+
+  .empty{text-align:center;color:var(--muted);padding:42px 16px;font-size:14px}
+  .empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media print{header.app,.tabs,.context,.savebar,.lap-head .btn,.toast{display:none!important}body{background:#fff}.wrap{padding:0}}
+  .seg{display:flex;gap:4px;background:#eef0f4;border-radius:11px;padding:4px;margin:16px 0 12px}
+  .seg button{flex:1;padding:8px;border:0;background:none;border-radius:8px;font:inherit;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer}
+  .seg button.active{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+  .rpt-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .rpt-table th{text-align:left;padding:9px 11px;background:var(--bg);font-weight:700;font-size:12px;color:var(--muted)}
+  .rpt-table td{padding:9px 11px;border-top:1px solid var(--line)}
+  .rpt-table tr.hot td{background:#fff5f3}
+  .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--absent-soft);color:var(--absent)}
+  .logo{object-fit:cover;overflow:hidden}
+  img.logo{background:#fff}
+  .bersebab-input{width:100%;margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px}
+  .bersebab-input:focus{outline:none;border-color:var(--brand)}
+  .srow{cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .status{padding:7px 13px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;user-select:none}
+  .status.yes{background:#e8f6ee;color:var(--present)}
+  .status.no{background:#fdecea;color:var(--absent)}
+  .student.absent .srow{background:#fff7f5}
+  .status.na{background:#eef0f4;color:#6b7585}
+  .student.na .srow{background:#f7f8fa}
+  .student.na .name{color:#6b7585}
 </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Semak Email Pelajar</h1>
-    <p class="sub">Masukkan No. Kad Pengenalan untuk dapatkan email pelajar anda.</p>
 
-    <label for="ic">No. Kad Pengenalan</label>
-    <input id="ic" type="text" inputmode="numeric" placeholder="cth: 010203-10-1234" autocomplete="off" />
-
-    <button id="submitBtn">Semak Email</button>
-
-    <div id="msg" class="msg"></div>
-
-    <div id="result" class="result">
-      <div class="name" id="resultName"></div>
-      <div class="field-label">Email Pelajar</div>
-      <div class="email-row">
-        <div class="email" id="resultEmail"></div>
-        <button class="copy-btn" id="copyBtn">Copy</button>
-      </div>
-    </div>
-
-    <div class="footer">Data anda tidak disimpan di pelayar ini.</div>
+<div id="login-screen" class="auth-screen hidden">
+  <div class="auth-card">
+    <img class="logo" src="logo.jpg" alt="SMK Batu Maung">
+    <h2>Log Masuk Guru</h2>
+    <p>Sistem Kehadiran Kelas Tambahan · SMK Batu Maung</p>
+    <label>No. Kad Pengenalan</label>
+    <input type="text" id="lg-ic" inputmode="numeric" placeholder="cth: 900101071234" autocomplete="username">
+    <button class="btn btn-primary" id="lg-btn" style="width:100%;margin-top:18px">Log Masuk</button>
+    <div class="auth-note">Log masuk menggunakan <b>No. Kad Pengenalan</b> anda.</div>
   </div>
+</div>
 
+<div id="app" class="hidden">
+<header class="app">
+  <div class="head-inner">
+    <img class="logo" src="logo.jpg" alt="SMK Batu Maung">
+    <div><h1>Kehadiran Kelas Tambahan</h1><p id="who-am-i">—</p></div>
+    <div class="sp"></div>
+    <button class="hbtn" id="btn-logout">Log Keluar</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="ambil">Ambil Kehadiran</button>
+    <button class="tab" data-tab="data">Data</button>
+    <button class="tab" data-tab="laporan">Laporan</button>
+    <button class="tab" data-tab="pelajar">Pelajar</button>
+    <button class="tab hidden" data-tab="adminlink" id="tab-admin-btn" style="color:var(--brand)">⚙ Admin</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- AMBIL -->
+  <section id="tab-ambil">
+    <div class="context">
+      <div class="field"><label>Kelas</label><select id="kelas"></select></div>
+      <div class="field"><label>Subjek</label>
+        <select id="subjek">
+          <option value="Matematik Tambahan">Matematik Tambahan</option>
+          <option value="Fizik">Fizik</option>
+          <option value="Kimia">Kimia</option>
+          <option value="Biologi">Biologi</option>
+          <option value="Sains Tambahan">Sains Tambahan</option>
+          <option value="Bahasa Melayu">Bahasa Melayu</option>
+          <option value="Bahasa Inggeris">Bahasa Inggeris</option>
+          <option value="Sejarah">Sejarah</option>
+          <option value="Pendidikan Islam">Pendidikan Islam</option>
+          <option value="Lain-lain">Lain-lain (taip)</option>
+        </select>
+      </div>
+      <div class="field hidden" id="subjek-custom-wrap"><label>Nama Subjek</label><input type="text" id="subjek-custom" placeholder="Taip nama subjek"></div>
+      <div class="field"><label>Tarikh</label><input type="date" id="tarikh"></div>
+      <div class="field"><label>Masa Mula</label><input type="time" id="masa-mula"></div>
+      <div class="field"><label>Masa Tamat</label><input type="time" id="masa-tamat"></div>
+    </div>
+    <div class="summary">
+      <div class="stat present"><div class="n" id="stat-hadir">0</div><div class="l">Hadir</div></div>
+      <div class="stat absent"><div class="n" id="stat-tidak">0</div><div class="l">Tidak Hadir</div></div>
+      <div class="stat"><div class="n" id="stat-jumlah">0</div><div class="l">Jumlah</div></div>
+    </div>
+    <p class="hint">Semua dikira <strong>hadir</strong> secara lalai. Tekan pelajar yang tiada, pilih sebab.</p>
+    <div class="roster" id="roster"></div>
+  </section>
+
+  <!-- DATA (ikut kelas guru) -->
+  <section id="tab-data" class="hidden">
+    <div class="seg" id="dt-seg">
+      <button data-p="minggu">Minggu Ini</button>
+      <button class="active" data-p="bulan">Bulan Ini</button>
+      <button data-p="semua">Semua</button>
+    </div>
+    <p class="legend">Kelas awak. <span style="color:var(--absent)">●</span> &lt;80% &nbsp;<span style="color:var(--warn)">●</span> 80–90% &nbsp;<span style="color:var(--present)">●</span> ≥90%</p>
+    <div id="data-list"></div>
+    <h3 style="font-size:14px;margin:18px 2px 8px">Kekerapan Tidak Hadir</h3>
+    <div id="data-kekerapan"></div>
+  </section>
+
+  <!-- LAPORAN -->
+  <section id="tab-laporan" class="hidden">
+    <div class="lap-head">
+      <div class="field"><label>Kelas</label><select id="lap-kelas"></select></div>
+      <div class="field"><label>Dari</label><input type="date" id="lap-from"></div>
+      <div class="field"><label>Hingga</label><input type="date" id="lap-to"></div>
+      <button class="btn btn-primary" id="lap-cari">Cari</button>
+      <button class="btn btn-ghost" id="lap-print">Cetak</button>
+    </div>
+    <div id="lap-container"></div>
+  </section>
+
+  <!-- PELAJAR (carian + profil + hukuman) -->
+  <section id="tab-pelajar" class="hidden">
+    <div class="lap-head">
+      <div class="field"><label>Kelas</label><select id="pp-kelas"></select></div>
+      <div class="field" style="flex:1;min-width:160px"><label>Atau cari nama / No. KP</label><input type="text" id="pp-q" placeholder="Taip nama atau No. KP"></div>
+      <button class="btn btn-primary" id="pp-go">Cari</button>
+      <button class="btn btn-ghost" id="pp-print">Cetak</button>
+    </div>
+    <div id="pp-out"></div>
+  </section>
+</div>
+
+<div class="savebar" id="savebar">
+  <div class="inner"><div class="save-info" id="save-info">Belum disimpan</div>
+  <button class="btn btn-primary" id="btn-simpan">Simpan Rekod</button></div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ====== CONFIG ======
-  const FUNCTION_URL = "https://shulmdrhpwasrbuflejv.supabase.co/functions/v1/lookup-email";
-  const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNodWxtZHJocHdhc3JidWZsZWp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MDkyODgsImV4cCI6MjA5ODI4NTI4OH0.ZxHIfV3Nw8MPy5YVopdeQBP-37VavadDjI7U4jXmGu0";
-  // ====================
+const SUPABASE_URL  = "https://uxodkjkpwiyfxozgrnib.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4b2Rramtwd2l5ZnhvemdybmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDY0MTUsImV4cCI6MjA5NzE4MjQxNX0.ndWT0nLnNQTo7rp8naPzYfRUXc2eRZ1U06GQScSCqBY";
+const ADMIN_EMAIL='admin@kehadiran.local';
+const EMAIL_DOMAIN='@kehadiran.local';
 
-  const $ = (id) => document.getElementById(id);
-  const ic = $("ic"), btn = $("submitBtn");
-  const msg = $("msg"), result = $("result");
-  const resultName = $("resultName"), resultEmail = $("resultEmail"), copyBtn = $("copyBtn");
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+const $=s=>document.querySelector(s);
+const esc=s=>(s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const icToEmail=ic=>ic.replace(/\D/g,'')+EMAIL_DOMAIN;
+const emailToIc=em=>(em||'').split('@')[0];
+const fmtDate=iso=>new Date(iso+'T00:00').toLocaleDateString('ms-MY',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
 
-  function showError(text) { msg.textContent = text; msg.className = "msg error"; result.className = "result"; }
-  function clearMsg() { msg.className = "msg"; msg.textContent = ""; }
+const REASONS=['Ponteng','Sekolah','Dengan Kebenaran'];
+const NA='Tidak Berkenaan';
+const state={teacher:null,students:[]};
+const current={kelas:null,date:null,subjek:null,roster:[],absent:{}};
 
-  async function lookup() {
-    clearMsg();
-    result.className = "result";
-    const icVal = ic.value.replace(/\D/g, "");
-    if (icVal.length !== 12) return showError("No. IC mesti 12 digit.");
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>';
-    try {
-      const res = await fetch(FUNCTION_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + ANON_KEY },
-        body: JSON.stringify({ ic: icVal }),
-      });
-      const data = await res.json();
-      if (!res.ok) return showError(data.error || "Ralat. Cuba lagi.");
-      resultName.textContent = data.name || "";
-      resultEmail.textContent = data.email;
-      result.className = "result show";
-      copyBtn.textContent = "Copy";
-    } catch {
-      showError("Gagal sambung ke pelayan. Semak sambungan internet.");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Semak Email";
-    }
+/* ===== DB ===== */
+const DB={
+  async myTeacher(ic){const{data,error}=await sb.from('teachers').select('*').eq('ic',ic).maybeSingle();if(error)throw error;return data;},
+  async setPasswordFlag(ic){const{error}=await sb.from('teachers').update({password_set:true}).eq('ic',ic);if(error)throw error;},
+  async students(){const{data,error}=await sb.from('students').select('*').order('name');if(error)throw error;return data;},
+  async getSession(kelas,date,subjek){
+    const{data,error}=await sb.from('attendance_sessions').select('id,session_time,recorded_by,absentees(student_id,reason)')
+      .eq('class_name',kelas).eq('date',date).eq('subject',subjek||'').maybeSingle();
+    if(error)throw error;return data;
+  },
+  async saveSession(kelas,date,subjek,recorded_by,session_time,absent){
+    const{data:s,error:e1}=await sb.from('attendance_sessions')
+      .upsert({class_name:kelas,date,subject:subjek||'',recorded_by,session_time:session_time||null},{onConflict:'class_name,date,subject'}).select('id').single();
+    if(e1)throw e1;
+    const{error:e2}=await sb.from('absentees').delete().eq('session_id',s.id);if(e2)throw e2;
+    if(absent.length){const{error:e3}=await sb.from('absentees').insert(absent.map(a=>({session_id:s.id,student_id:a.student_id,reason:a.reason})));if(e3)throw e3;}
+  },
+  async sessionsByClass(kelas,from,to){
+    let q=sb.from('attendance_sessions').select('class_name,date,subject,absentees(reason,students(name,nokp))').eq('class_name',kelas);
+    if(from)q=q.gte('date',from); if(to)q=q.lte('date',to);
+    const{data,error}=await q;if(error)throw error;return data;
+  },
+  async listRemarks(classes){const{data,error}=await sb.from('class_remarks').select('*').in('class_name',classes).order('created_at',{ascending:false});if(error)throw error;return data;},
+  async addRemark(r){const{error}=await sb.from('class_remarks').insert(r);if(error)throw error;},
+  async delRemark(id){const{error}=await sb.from('class_remarks').delete().eq('id',id);if(error)throw error;},
+  async studentAbsences(studentId){const{data,error}=await sb.from('absentees').select('reason,attendance_sessions(date,class_name,subject,session_time,recorded_by)').eq('student_id',studentId);if(error)throw error;return data;},
+  async classSessionCount(kelas){const{count,error}=await sb.from('attendance_sessions').select('id',{count:'exact',head:true}).eq('class_name',kelas);if(error)throw error;return count||0;},
+  async teachersMap(){const{data,error}=await sb.from('teachers').select('ic,name');if(error)throw error;const m={};(data||[]).forEach(t=>{m[t.ic]=t.name;});return m;},
+  async listDiscipline(nokp){const{data,error}=await sb.from('discipline').select('*').eq('student_nokp',nokp).order('created_at',{ascending:false});if(error)throw error;return data;},
+  async addDiscipline(d){const{error}=await sb.from('discipline').insert(d);if(error)throw error;},
+  async delDiscipline(id){const{error}=await sb.from('discipline').delete().eq('id',id);if(error)throw error;},
+  async laporanSessions(kelas,from,to){
+    const{data,error}=await sb.from('attendance_sessions')
+      .select('id,date,subject,session_time,class_name,absentees(student_id,reason,students(name,nokp,kelas))')
+      .eq('class_name',kelas).gte('date',from).lte('date',to).order('date');
+    if(error)throw error;return data;
   }
+};
 
-  btn.addEventListener("click", lookup);
-  ic.addEventListener("keydown", (e) => { if (e.key === "Enter") lookup(); });
-  copyBtn.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(resultEmail.textContent);
-      copyBtn.textContent = "Copied \u2713";
-      setTimeout(() => (copyBtn.textContent = "Copy"), 1800);
-    } catch { copyBtn.textContent = "Gagal"; }
-  });
+const classesForTeacher=()=>{
+  const all=[...new Set(state.students.map(s=>s.kelas).filter(Boolean))].sort();
+  // Kalau guru ada class_name, tunjuk kelas dia dulu, lain di bawah
+  if(state.teacher?.class_name){
+    const mine=all.filter(c=>c===state.teacher.class_name);
+    const rest=all.filter(c=>c!==state.teacher.class_name);
+    return [...mine,...rest];
+  }
+  return all;
+};
+const rosterFor=kelas=>state.students.filter(s=>s.kelas===kelas).sort((a,b)=>a.name.localeCompare(b.name));
+const myClasses=()=>state.teacher?.class_name?[state.teacher.class_name]:classesForTeacher();
+function periodRange(p){const t=new Date();const to=todayISO();
+  if(p==='minggu'){const f=new Date(t);f.setDate(t.getDate()-6);return[f.toISOString().slice(0,10),to];}
+  if(p==='bulan')return[`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-01`,to];
+  return[null,null];}   // Semua = tiada had tarikh
+const dataPeriod=()=>document.querySelector('#dt-seg button.active')?.dataset.p||'bulan';
+function getSubjek(){
+  const v=$('#subjek').value;
+  return v==='Lain-lain'?($('#subjek-custom').value.trim()||'Lain-lain'):v;
+}
+function getMasa(){const a=$('#masa-mula').value,b=$('#masa-tamat').value;return a&&b?`${a}-${b}`:(a||'');}
+function fmtMasa(t){if(!t)return '';const[a,b]=t.split('-');return b?`${a}–${b}`:a;}
+
+/* ===== AUTH ===== */
+function showScreen(name){
+  ['login-screen','app'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('hidden');});
+  const el=document.getElementById(name==='app'?'app':name+'-screen');
+  if(el){el.classList.remove('hidden');window.scrollTo(0,0);}
+}
+async function boot(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session&&session.user.email===ADMIN_EMAIL){await sb.auth.signOut();showScreen('login');return;}
+  if(session) await afterLogin(); else showScreen('login');
+}
+$('#lg-btn').onclick=async()=>{
+  const ic=$('#lg-ic').value.replace(/\D/g,'');
+  if(ic.length<4){toast('Masukkan No. KP penuh');return;}
+  const pw=ic.slice(-4);            // kata laluan tetap = 4 digit akhir IC
+  $('#lg-btn').disabled=true;
+  const{error}=await sb.auth.signInWithPassword({email:icToEmail(ic),password:pw});
+  $('#lg-btn').disabled=false;
+  if(error){toast('No. KP tidak sah atau akaun belum dicipta');return;}
+  await afterLogin();
+};
+$('#lg-ic').addEventListener('keydown',e=>{if(e.key==='Enter')$('#lg-btn').click();});
+async function afterLogin(){
+  const{data:{user}}=await sb.auth.getUser();
+  const ic=emailToIc(user.email);
+  let t=null;try{t=await DB.myTeacher(ic);}catch(e){}
+  state.teacher=t||{ic,name:ic,is_admin:false};
+  // Tab Admin hanya untuk guru yang dibenarkan
+  $('#tab-admin-btn').classList.toggle('hidden', !state.teacher.is_admin);
+  await enterApp();
+}
+$('#btn-logout').onclick=async()=>{await sb.auth.signOut();state.teacher=null;showScreen('login');$('#lg-ic').value='';};
+
+/* ===== ENTER APP ===== */
+async function enterApp(){
+  showScreen('app');
+  $('#who-am-i').textContent=(state.teacher.name||'Guru')+(state.teacher.class_name?(' · '+state.teacher.class_name):'');
+  $('#tarikh').value=todayISO();
+  try{state.students=await DB.students();}catch(e){toast('Ralat memuat pelajar');state.students=[];}
+  try{state.teachersByIc=await DB.teachersMap();}catch(e){state.teachersByIc={};}
+  fillKelasDropdown();
+  fillLaporanKelas();
+  await loadCurrent();
+}
+
+function fillKelasDropdown(){
+  const cls=classesForTeacher();
+  $('#kelas').innerHTML=cls.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')||'<option value="">(Tiada)</option>';
+  if(state.teacher?.class_name&&cls.includes(state.teacher.class_name))$('#kelas').value=state.teacher.class_name;
+}
+function fillLaporanKelas(){
+  const cls=classesForTeacher();
+  $('#lap-kelas').innerHTML=cls.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  // default range: bulan ini
+  const now=new Date(),y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0');
+  $('#lap-from').value=`${y}-${m}-01`;
+  $('#lap-to').value=todayISO();
+}
+
+// Subjek "Lain-lain" → tunjuk input teks
+$('#subjek').addEventListener('change',()=>{
+  const v=$('#subjek').value;
+  $('#subjek-custom-wrap').classList.toggle('hidden',v!=='Lain-lain');
+  loadCurrent();
+});
+$('#subjek-custom').addEventListener('change',loadCurrent);
+
+/* ===== AMBIL ===== */
+async function loadCurrent(){
+  current.kelas=$('#kelas').value||null;
+  current.date=$('#tarikh').value;
+  current.subjek=getSubjek();
+  current.absent={};
+  if(!current.kelas){current.roster=[];renderRoster();$('#save-info').textContent='';return;}
+  current.roster=rosterFor(current.kelas);
+  try{
+    const s=await DB.getSession(current.kelas,current.date,current.subjek);
+    if(s){
+      s.absentees.forEach(a=>current.absent[a.student_id]=a.reason);
+      if(s.session_time){const[a,b]=s.session_time.split('-');$('#masa-mula').value=a||'';$('#masa-tamat').value=b||'';}
+    }
+    const myIc=state.teacher?.ic||null;
+    if(s && s.recorded_by && myIc && s.recorded_by!==myIc){
+      // sesi direkod oleh cikgu LAIN — amaran tindih
+      $('#save-info').innerHTML='⚠️ Sesi ini direkod oleh <b>'+esc(tName(s.recorded_by))+'</b>. Simpan akan TINDIH rekod beliau.';
+      $('#save-info').style.color='var(--absent)';
+    } else {
+      $('#save-info').textContent=s?'✏️ Mod edit — rekod sedia ada dimuatkan, ubah & simpan semula':'Belum disimpan';
+      $('#save-info').style.color='';
+    }
+    $('#btn-simpan').textContent=s?'Kemaskini Rekod':'Simpan Rekod';
+  }catch(e){toast('Ralat memuat: '+e.message);}
+  renderRoster();
+}
+function renderRoster(){
+  $('#roster').innerHTML=current.roster.map((s,i)=>{
+    const v=current.absent[s.id];
+    const isNA=v===NA, ab=v!==undefined&&!isNA, rs=ab?v:'';
+    const cls=isNA?'na':(ab?'absent':'');
+    const badge=isNA?`<span class="status na">Tidak Berkenaan</span>`:(ab?`<span class="status no">Tidak Hadir</span>`:`<span class="status yes">✓ Hadir</span>`);
+    return `<div class="student ${cls}" data-id="${s.id}">
+      <div class="srow" data-act="toggle"><span class="num">${i+1}.</span>
+        <span class="who"><span class="name">${esc(s.name)}</span><br><span class="meta">${esc(s.nokp)} · ${esc(s.kelas||'')}</span></span>
+        ${badge}</div>
+      ${ab?`<div class="reasons">${REASONS.map(r=>{const on=r==='Dengan Kebenaran'?(rs||'').startsWith('Dengan Kebenaran'):rs===r;return `<button class="chip ${on?'on':''}" data-act="reason" data-r="${r}">${r}</button>`;}).join('')}</div>${(rs||'').startsWith('Dengan Kebenaran')?`<input class="bersebab-input" data-act="bersebab-note" placeholder="Nyatakan sebab (cth: Demam, urusan keluarga)" value="${esc(rs.replace(/^Dengan Kebenaran:?\s*/,''))}">`:''}`:''}</div>`;
+  }).join('')||'<div class="empty"><strong>Tiada pelajar</strong>Kelas ini belum ada pelajar.</div>';
+  let tidak=0,na=0;Object.values(current.absent).forEach(v=>{if(v===NA)na++;else tidak++;});
+  const total=current.roster.length;
+  $('#stat-jumlah').textContent=total;$('#stat-tidak').textContent=tidak;$('#stat-hadir').textContent=total-tidak-na;
+}
+$('#roster').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const id=e.target.closest('.student').dataset.id;
+  if(b.dataset.act==='toggle'){const v=current.absent[id];if(v===undefined)current.absent[id]=REASONS[0];else if(v!==NA)current.absent[id]=NA;else delete current.absent[id];renderRoster();}
+  if(b.dataset.act==='reason'){const r=b.dataset.r;if(r==='Dengan Kebenaran'){if(!(current.absent[id]||'').startsWith('Dengan Kebenaran'))current.absent[id]='Dengan Kebenaran:';}else current.absent[id]=r;renderRoster();}
+});
+$('#roster').addEventListener('input',e=>{
+  const inp=e.target.closest('[data-act="bersebab-note"]');if(!inp)return;
+  const id=e.target.closest('.student').dataset.id;
+  const v=inp.value.trim();
+  current.absent[id]=v?('Dengan Kebenaran: '+v):'Dengan Kebenaran:';
+});
+$('#kelas').addEventListener('change',loadCurrent);
+$('#tarikh').addEventListener('change',loadCurrent);
+$('#btn-simpan').onclick=async()=>{
+  if(!current.kelas){toast('Tiada kelas');return;}
+  // Pastikan unique constraint ada (kelas+date+subject)
+  // Kena update schema supaya unique termasuk subject
+  $('#btn-simpan').disabled=true;
+  try{
+    await DB.saveSession(current.kelas,current.date,current.subjek,state.teacher?.ic||null,getMasa(),
+      Object.entries(current.absent).map(([student_id,reason])=>({student_id,reason})));
+    $('#save-info').textContent='Disimpan ✓';$('#btn-simpan').textContent='Kemaskini Rekod';toast('Rekod disimpan ✓');
+  }catch(e){toast('Ralat simpan: '+e.message);}
+  $('#btn-simpan').disabled=false;
+};
+
+/* ===== DATA (ikut kelas guru sahaja) ===== */
+async function renderData(){
+  $('#dt-seg').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;document.querySelectorAll('#dt-seg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderDataBody();};
+  renderDataBody();
+}
+async function renderDataBody(){
+  const box=$('#data-list');box.innerHTML='<div class="empty">Mengira…</div>';$('#data-kekerapan').innerHTML='';
+  try{
+    const cls=myClasses();
+    if(!cls.length){box.innerHTML='<div class="empty"><strong>Tiada kelas</strong></div>';return;}
+    const [from,to]=periodRange(dataPeriod());
+    const results=await Promise.all(cls.map(c=>DB.sessionsByClass(c,from,to)));
+    const rows=cls.map((cn,i)=>{
+      const ss=results[i];const students=rosterFor(cn).length;
+      let absent=0;ss.forEach(s=>absent+=(s.absentees||[]).filter(a=>a.reason!==NA).length);
+      const slots=students*ss.length;
+      return{cn,students,sessions:ss.length,absent,rate:slots>0?((slots-absent)/slots*100):null};
+    }).sort((a,b)=>{if(a.rate===null)return 1;if(b.rate===null)return -1;return a.rate-b.rate;});
+    box.innerHTML=rows.map(r=>{
+      const col=r.rate===null?'#9aa3b2':r.rate<80?'var(--absent)':r.rate<90?'var(--warn)':'var(--present)';
+      const label=r.rate===null?'—':Math.round(r.rate)+'%';
+      return `<div class="dcard"><div class="gauge" style="background:${col}">${label}</div>
+        <div class="info"><div class="cn">${esc(r.cn)}</div>
+        <div class="det">${r.students} pelajar · ${r.sessions} sesi · ${r.absent} kali tidak hadir</div></div></div>`;
+    }).join('')||'<div class="empty">Tiada sesi dalam tempoh ini.</div>';
+    // Kekerapan tidak hadir (pelajar yang sama)
+    const perStu={};
+    results.flat().forEach(s=>(s.absentees||[]).forEach(a=>{if(a.reason===NA)return;const st=a.students||{};const id=st.nokp||st.name;
+      perStu[id]=perStu[id]||{name:st.name||'-',nokp:st.nokp||'',count:0,reasons:{}};
+      perStu[id].count++;perStu[id].reasons[a.reason]=(perStu[id].reasons[a.reason]||0)+1;}));
+    const ku=Object.values(perStu).sort((a,b)=>b.count-a.count);
+    $('#data-kekerapan').innerHTML=ku.length?`<table class="rpt-table"><tr><th>#</th><th>Pelajar</th><th>Kali</th><th>Sebab</th></tr>
+      ${ku.map((p,i)=>`<tr class="${p.count>=3?'hot':''}"><td>${i+1}</td><td><b>${esc(p.name)}</b></td><td><span class="pill">${p.count}</span></td><td style="color:var(--muted)">${Object.entries(p.reasons).map(([r,n])=>esc(r)+'×'+n).join(', ')}</td></tr>`).join('')}
+      </table><p class="legend" style="margin-top:8px">Baris merah = 3 kali atau lebih tidak hadir (pelajar yang sama).</p>`
+      :'<div class="empty" style="padding:20px">Tiada ketidakhadiran dalam tempoh ini.</div>';
+  }catch(e){box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';}
+}
+
+/* ===== PELAJAR: pilih kelas -> senarai -> profil + hukuman ===== */
+const HK_BASE=['Kerja Amal 1 jam','Kerja Amal 1 jam 30 minit'];
+const HK_ROTAN=['1 rotan di tapak tangan','2 rotan di tapak tangan','3 rotan di tapak tangan','1 rotan di punggung','2 rotan di punggung','3 rotan di punggung'];
+function icGender(nokp){const d=(nokp||'').replace(/\D/g,'');if(d.length<12)return null;return parseInt(d[11],10)%2===0?'F':'M';}
+function actionsFor(nokp){return icGender(nokp)==='F'?HK_BASE.slice():HK_BASE.concat(HK_ROTAN);}
+function rotanNote(nokp){const g=icGender(nokp);return g==='F'?'Murid perempuan — pilihan rotan disembunyikan mengikut polisi.':'⚠️ Murid perempuan tidak boleh dirotan.';}
+const tName=ic=>(state.teachersByIc&&state.teachersByIc[ic])||(ic?ic:'(Tidak direkod)');
+const allClassList=()=>[...new Set(state.students.map(s=>s.kelas).filter(Boolean))].sort();
+function renderPelajar(){
+  $('#pp-kelas').innerHTML='<option value="">— Pilih kelas —</option>'+allClassList().map(c=>`<option>${esc(c)}</option>`).join('');
+  $('#pp-kelas').onchange=()=>{$('#pp-q').value='';listByClass($('#pp-kelas').value);};
+  $('#pp-go').onclick=ppSearch;
+  $('#pp-print').onclick=()=>window.print();
+  $('#pp-q').onkeydown=e=>{if(e.key==='Enter')ppSearch();};
+  $('#pp-out').innerHTML='<div class="empty"><strong>Pilih kelas</strong>Pilih kelas untuk lihat senarai pelajar, atau cari nama/No. KP.</div>';
+}
+function pctColor(pct){
+  if(pct==null) return {b:'var(--absent)',bg:'#fff0ed'};
+  if(pct>=90) return {b:'var(--present)',bg:'#f0faf5'};
+  if(pct>=80) return {b:'var(--warn)',bg:'#fff8ec'};
+  if(pct>=70) return {b:'#e8743b',bg:'#fff1e8'};
+  return {b:'var(--absent)',bg:'#fff0ed'};
+}
+function studentRow(s,i,info){
+  // info = {absent, pct} untuk pelajar yang pernah tidak hadir; null jika kehadiran penuh
+  let style='cursor:pointer', tag='';
+  if(info && info.absent>0){
+    const col=pctColor(info.pct);
+    style=`cursor:pointer;border-left:5px solid ${col.b};background:${col.bg}`;
+    tag=info.pct!=null?` <span class="pill" style="background:${col.b};color:#fff">${info.pct}%</span>`:` <span class="pill">${info.absent}×</span>`;
+  }
+  const detExtra=info&&info.absent>0?` · ${info.absent} kali tidak hadir`:'';
+  return `<div class="dcard" data-id="${s.id}" style="${style}"><div class="info"><div class="cn">${i!=null?i+1+'. ':''}${esc(s.name)}${tag}</div><div class="det">${esc(s.nokp)} · ${esc(s.kelas||'')}${detExtra}</div></div></div>`;
+}
+async function listByClass(kelas){
+  if(!kelas){$('#pp-out').innerHTML='';return;}
+  const list=state.students.filter(s=>s.kelas===kelas).sort((a,b)=>a.name.localeCompare(b.name));
+  $('#pp-out').innerHTML='<div class="empty">Memuat…</div>';
+  let total=0; const absCount={};
+  try{
+    const {data,error}=await sb.from('attendance_sessions').select('absentees(student_id,reason)').eq('class_name',kelas);
+    if(error)throw error;
+    total=(data||[]).length;
+    (data||[]).forEach(s=>(s.absentees||[]).forEach(a=>{if(a.reason===NA)return;absCount[a.student_id]=(absCount[a.student_id]||0)+1;}));
+  }catch(e){/* kalau gagal, papar tanpa tanda */}
+  const info=id=>{const ab=absCount[id]||0; if(ab<=0)return null; return {absent:ab, pct: total>0?Math.round((total-ab)/total*100):null};};
+  const absentN=list.filter(s=>absCount[s.id]).length;
+  $('#pp-out').innerHTML=`<p class="legend">${list.length} pelajar dalam <b>${esc(kelas)}</b> · <span style="color:var(--absent)">${absentN} pernah tidak hadir</span> — warna ikut % kehadiran: <span style="color:var(--present)">●</span>≥90 <span style="color:var(--warn)">●</span>80–89 <span style="color:#e8743b">●</span>70–79 <span style="color:var(--absent)">●</span>&lt;70. Tekan nama untuk butiran.</p>`+
+    list.map((s,i)=>studentRow(s,i,info(s.id))).join('');
+  $('#pp-out').onclick=e=>{const d=e.target.closest('[data-id]');if(d){const s=state.students.find(x=>x.id===d.dataset.id);if(s)showProfil(s,kelas);}};
+}
+function ppSearch(){
+  const q=$('#pp-q').value.trim().toLowerCase();
+  if(!q){toast('Taip carian');return;}
+  $('#pp-kelas').value='';
+  const m=state.students.filter(s=>s.name.toLowerCase().includes(q)||(s.nokp||'').toLowerCase().includes(q)).slice(0,40);
+  if(!m.length){$('#pp-out').innerHTML='<div class="empty"><strong>Tiada padanan</strong></div>';return;}
+  if(m.length===1){showProfil(m[0]);return;}
+  $('#pp-out').innerHTML=m.map(s=>studentRow(s,null)).join('');
+  $('#pp-out').onclick=e=>{const d=e.target.closest('[data-id]');if(d){const s=state.students.find(x=>x.id===d.dataset.id);if(s)showProfil(s);}};
+}
+async function showProfil(s,backClass){
+  $('#pp-out').innerHTML='<div class="empty">Memuat…</div>';
+  try{
+    const [abs,disc,sessR]=await Promise.all([
+      DB.studentAbsences(s.id),
+      DB.listDiscipline(s.nokp),
+      sb.from('attendance_sessions').select('subject').eq('class_name',s.kelas)
+    ]);
+    if(sessR.error)throw sessR.error;
+    const sessions=sessR.data||[];
+    const totalAll=sessions.length;
+    const perSubjTotal={};
+    sessions.forEach(x=>{const j=x.subject||'(tiada subjek)';perSubjTotal[j]=(perSubjTotal[j]||0)+1;});
+    const subjects=Object.keys(perSubjTotal).sort();
+    const absAll=abs.filter(a=>a.reason!==NA).map(a=>({date:a.attendance_sessions?.date||'-',subject:a.attendance_sessions?.subject||'(tiada subjek)',masa:a.attendance_sessions?.session_time||'',cikgu:tName(a.attendance_sessions?.recorded_by),reason:a.reason}));
+    const back=backClass?`<button class="btn btn-ghost" id="pp-back" style="margin-bottom:10px">← Senarai ${esc(backClass)}</button>`:'';
+    const isAdmin=!!state.teacher?.is_admin;
+    $('#pp-out').innerHTML=`${back}
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow)">
+        <div style="font-size:18px;font-weight:800">${esc(s.name)}</div>
+        <div style="font-size:13px;color:var(--muted)">${esc(s.nokp)} · ${esc(s.kelas||'')}</div>
+      </div>
+      <div class="lap-head" style="margin:0 0 10px"><div class="field" style="flex:1"><label>Tapis ikut subjek</label><select id="pp-subj"><option value="">Semua subjek</option>${subjects.map(j=>`<option>${esc(j)}</option>`).join('')}</select></div></div>
+      <div id="pp-body"></div>
+
+      <h3 style="font-size:14px;margin:18px 2px 8px">Hukuman / Tindakan HEM</h3>
+      ${isAdmin?`<div class="lap-head" style="margin:0 0 10px">
+        <div class="field"><label>Tindakan</label><select id="hk-action">${actionsFor(s.nokp).map(a=>`<option>${a}</option>`).join('')}</select></div>
+        <div class="field" style="flex:2;min-width:180px"><label>Catatan (pilihan)</label><input type="text" id="hk-note" placeholder="Butiran tambahan"></div>
+        <button class="btn btn-primary" id="hk-add">Rekod Hukuman</button>
+      </div>
+      <p class="legend" style="margin:2px 2px 8px">${rotanNote(s.nokp)}</p>`
+      :`<p class="legend" style="margin:2px 2px 10px">🔒 Hukuman direkod oleh HEM/pentadbir sahaja. Cikgu hanya boleh lihat rekod.</p>`}
+      <div id="hk-list">${disc.length?disc.map(d=>`<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>${esc(d.action)}</b><span style="font-size:12px;color:var(--muted)">${esc((d.created_at||'').slice(0,10))}${d.recorded_name?' · '+esc(d.recorded_name):''}</span></div>
+        ${d.note?`<div style="margin-top:4px;font-size:14px">${esc(d.note)}</div>`:''}
+        ${isAdmin?`<button class="hbtn" data-del="${d.id}" style="margin-top:8px;color:var(--absent);font-size:12px;padding:5px 10px">Padam</button>`:''}</div>`).join(''):'<div class="empty" style="padding:16px">Tiada rekod hukuman.</div>'}</div>`;
+
+    const renderBody=()=>{
+      const sel=$('#pp-subj').value;
+      const rows=(sel?absAll.filter(a=>a.subject===sel):absAll).slice().sort((x,y)=>y.date.localeCompare(x.date));
+      const total=sel?(perSubjTotal[sel]||0):totalAll;
+      const absentN=rows.length, attended=Math.max(0,total-absentN), pct=total>0?Math.round(attended/total*100):100;
+      const pcol=pct>=90?'var(--present)':pct>=80?'var(--warn)':pct>=70?'#e8743b':'var(--absent)';
+      $('#pp-body').innerHTML=`
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+          <div style="width:80px;height:80px;border-radius:50%;display:grid;place-items:center;background:${pcol};color:#fff;font-size:23px;font-weight:800;flex:0 0 auto">${total>0?pct+'%':'—'}</div>
+          <div style="flex:1;min-width:150px;font-size:13px;color:var(--muted)">${sel?'Subjek: <b>'+esc(sel)+'</b>':'<b>Semua subjek</b>'}<br>${total>0?`Hadir ${attended}/${total} sesi · ${absentN} kali tidak hadir`:'Belum ada sesi direkod'}</div>
+        </div>
+        ${pct===100&&total>0?'<div style="color:var(--present);font-weight:700;padding:0 2px 12px">✓ Kehadiran penuh.</div>':''}
+        ${rows.length?`<table class="rpt-table"><tr><th>Tarikh</th><th>Subjek</th><th>Masa</th><th>Cikgu</th><th>Sebab</th></tr>
+          ${rows.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.subject)}</td><td>${esc(fmtMasa(a.masa))}</td><td>${esc(a.cikgu)}</td><td><span class="pill">${esc(a.reason)}</span></td></tr>`).join('')}
+          </table><p class="legend" style="margin-top:6px">HEM boleh rujuk cikgu yang merekod sesi tersebut.</p>`
+          :(total>0?'<div class="empty" style="padding:12px;color:var(--present)">✓ Tiada rekod tidak hadir.</div>':'<div class="empty" style="padding:12px">Belum ada sesi.</div>')}`;
+    };
+    renderBody();
+    $('#pp-subj').onchange=renderBody;
+    if(backClass)$('#pp-back').onclick=()=>listByClass(backClass);
+    if(isAdmin){
+      $('#hk-add').onclick=async()=>{
+        const action=$('#hk-action').value,note=$('#hk-note').value.trim();
+        try{await DB.addDiscipline({student_nokp:s.nokp,student_name:s.name,class_name:s.kelas,action,note,recorded_by:state.teacher?.ic||null,recorded_name:state.teacher?.name||null});
+          toast('Hukuman direkod ✓');showProfil(s,backClass);}catch(e){toast('Ralat: '+e.message);}
+      };
+      $('#hk-list').onclick=async e=>{const b=e.target.closest('[data-del]');if(!b)return;if(confirm('Padam rekod hukuman ini?')){try{await DB.delDiscipline(b.dataset.del);showProfil(s,backClass);toast('Dipadam');}catch(e){toast('Ralat: '+e.message);}}};
+    }
+  }catch(e){$('#pp-out').innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';}
+}
+
+/* ===== LAPORAN ===== */
+async function renderLaporan(){
+  const kelas=$('#lap-kelas').value,from=$('#lap-from').value,to=$('#lap-to').value;
+  if(!kelas||!from||!to){toast('Isi semua medan');return;}
+  const box=$('#lap-container');box.innerHTML='<div class="empty">Memuat…</div>';
+  try{
+    const sessions=await DB.laporanSessions(kelas,from,to);
+    if(!sessions.length){box.innerHTML='<div class="empty"><strong>Tiada sesi</strong>Tiada rekod kehadiran untuk tempoh ini.</div>';return;}
+    // Kumpul semua pelajar tidak hadir
+    const absentMap={};// student_id -> {name,nokp,kelas,reasons:[{date,subject,reason}]}
+    sessions.forEach(s=>{
+      (s.absentees||[]).forEach(a=>{
+        const nm=a.students?.name||a.student_id;
+        const nokp=a.students?.nokp||'';
+        if(!absentMap[a.student_id])absentMap[a.student_id]={name:nm,nokp,entries:[]};
+        absentMap[a.student_id].entries.push({date:s.date,subject:s.subject||'-',masa:s.session_time||'',reason:a.reason});
+      });
+    });
+    const absentList=Object.values(absentMap).sort((a,b)=>a.name.localeCompare(b.name));
+    box.innerHTML=`
+      <div class="rpt-card">
+        <h4>Laporan Ketidakhadiran</h4>
+        <div class="sub">${esc(kelas)} · ${fmtDate(from)} – ${fmtDate(to)} · ${sessions.length} sesi · ${absentList.length} pelajar tidak hadir</div>
+        ${absentList.length?`<table class="rpt-table">
+          <tr><th>#</th><th>Nama Pelajar</th><th>NoKP</th><th>Tarikh</th><th>Subjek</th><th>Masa</th><th>Sebab</th></tr>
+          ${absentList.flatMap((p,i)=>p.entries.map((e,j)=>`
+            <tr>
+              <td>${j===0?i+1:''}</td>
+              <td>${j===0?`<b>${esc(p.name)}</b>`:''}</td>
+              <td>${j===0?esc(p.nokp):''}</td>
+              <td>${fmtDate(e.date)}</td>
+              <td>${esc(e.subject)}</td>
+              <td>${esc(fmtMasa(e.masa))}</td>
+              <td><span class="badge-reason">${esc(e.reason)}</span></td>
+            </tr>`)).join('')}
+        </table>`:'<div style="color:var(--present);font-weight:600;padding:10px 0">✓ Semua pelajar hadir sepanjang tempoh ini.</div>'}
+      </div>`;
+  }catch(e){box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';}
+}
+$('#lap-cari').onclick=renderLaporan;
+$('#lap-print').onclick=()=>window.print();
+
+/* ===== NAV ===== */
+document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+  const k=tab.dataset.tab;
+  if(k==='adminlink'){ if(state.teacher?.is_admin){ window.location.href='admin.html'; } return; }
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');
+  $('#tab-ambil').classList.toggle('hidden',k!=='ambil');
+  $('#tab-data').classList.toggle('hidden',k!=='data');
+  $('#tab-laporan').classList.toggle('hidden',k!=='laporan');
+  $('#tab-pelajar').classList.toggle('hidden',k!=='pelajar');
+  $('#savebar').classList.toggle('hidden',k!=='ambil');
+  if(k==='data')renderData();
+  if(k==='pelajar')renderPelajar();
+  if(k==='ambil'){fillKelasDropdown();loadCurrent();}
+}));
+
+boot();
 </script>
 </body>
 </html>
