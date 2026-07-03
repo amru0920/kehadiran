@@ -254,6 +254,7 @@ const DB={
   async myTeacher(ic){const{data,error}=await sb.from('teachers').select('*').eq('ic',ic).maybeSingle();if(error)throw error;return data;},
   async setPasswordFlag(ic){const{error}=await sb.from('teachers').update({password_set:true}).eq('ic',ic);if(error)throw error;},
   async students(){const{data,error}=await sb.from('students').select('*').order('name');if(error)throw error;return data;},
+  async groups(){const{data,error}=await sb.from('groups').select('*, group_members(student_id)').order('name');if(error)throw error;return (data||[]).map(g=>({...g,members:(g.group_members||[]).map(m=>m.student_id)}));},
   async getSession(kelas,date,subjek){
     const{data,error}=await sb.from('attendance_sessions').select('id,session_time,recorded_by,absentees(student_id,reason)')
       .eq('class_name',kelas).eq('date',date).eq('subject',subjek||'').maybeSingle();
@@ -299,6 +300,8 @@ const classesForTeacher=()=>{
   return all;
 };
 const rosterFor=kelas=>state.students.filter(s=>s.kelas===kelas).sort((a,b)=>a.name.localeCompare(b.name));
+const rosterForGroup=g=>(g.members||[]).map(id=>state.students.find(s=>s.id===id)).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));
+function setSubjek(subj){const sel=$('#subjek');const has=[...sel.options].some(o=>o.value===subj);if(has){sel.value=subj;$('#subjek-custom-wrap').classList.add('hidden');}else{sel.value='Lain-lain';$('#subjek-custom-wrap').classList.remove('hidden');$('#subjek-custom').value=subj;}}
 const myClasses=()=>state.teacher?.class_name?[state.teacher.class_name]:classesForTeacher();
 function periodRange(p){const t=new Date();const to=todayISO();
   if(p==='minggu'){const f=new Date(t);f.setDate(t.getDate()-6);return[f.toISOString().slice(0,10),to];}
@@ -352,6 +355,7 @@ async function enterApp(){
   $('#tarikh').value=todayISO();
   try{state.students=await DB.students();}catch(e){toast('Ralat memuat pelajar');state.students=[];}
   try{state.teachersByIc=await DB.teachersMap();}catch(e){state.teachersByIc={};}
+  try{state.groups=await DB.groups();}catch(e){state.groups=[];}
   fillKelasDropdown();
   fillLaporanKelas();
   await loadCurrent();
@@ -359,7 +363,10 @@ async function enterApp(){
 
 function fillKelasDropdown(){
   const cls=classesForTeacher();
-  $('#kelas').innerHTML=cls.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')||'<option value="">(Tiada)</option>';
+  let html=`<optgroup label="Kelas Tingkatan">`+cls.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')+`</optgroup>`;
+  const grps=state.groups||[];
+  if(grps.length) html+=`<optgroup label="Kumpulan Kelas Tambahan">`+grps.map(g=>`<option value="grp:${g.id}">${esc(g.name)}${g.subject?' — '+esc(g.subject):''}</option>`).join('')+`</optgroup>`;
+  $('#kelas').innerHTML=html||'<option value="">(Tiada)</option>';
   if(state.teacher?.class_name&&cls.includes(state.teacher.class_name))$('#kelas').value=state.teacher.class_name;
 }
 function fillLaporanKelas(){
@@ -381,12 +388,21 @@ $('#subjek-custom').addEventListener('change',loadCurrent);
 
 /* ===== AMBIL ===== */
 async function loadCurrent(){
-  current.kelas=$('#kelas').value||null;
+  const val=$('#kelas').value||'';
+  current.group=null;
+  if(val.startsWith('grp:')){
+    const g=(state.groups||[]).find(x=>'grp:'+x.id===val);
+    current.group=g||null;
+    current.kelas=g?g.name:null;
+    if(g&&g.subject)setSubjek(g.subject);
+  }else{
+    current.kelas=val||null;
+  }
   current.date=$('#tarikh').value;
   current.subjek=getSubjek();
   current.absent={};
   if(!current.kelas){current.roster=[];renderRoster();$('#save-info').textContent='';return;}
-  current.roster=rosterFor(current.kelas);
+  current.roster=current.group?rosterForGroup(current.group):rosterFor(current.kelas);
   try{
     const s=await DB.getSession(current.kelas,current.date,current.subjek);
     if(s){
