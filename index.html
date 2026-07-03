@@ -409,15 +409,8 @@ async function loadCurrent(){
       s.absentees.forEach(a=>current.absent[a.student_id]=a.reason);
       if(s.session_time){const[a,b]=s.session_time.split('-');$('#masa-mula').value=a||'';$('#masa-tamat').value=b||'';}
     }
-    const myIc=state.teacher?.ic||null;
-    if(s && s.recorded_by && myIc && s.recorded_by!==myIc){
-      // sesi direkod oleh cikgu LAIN — amaran tindih
-      $('#save-info').innerHTML='⚠️ Sesi ini direkod oleh <b>'+esc(tName(s.recorded_by))+'</b>. Simpan akan TINDIH rekod beliau.';
-      $('#save-info').style.color='var(--absent)';
-    } else {
-      $('#save-info').textContent=s?'✏️ Mod edit — rekod sedia ada dimuatkan, ubah & simpan semula':'Belum disimpan';
-      $('#save-info').style.color='';
-    }
+    $('#save-info').textContent=s?'✏️ Mod edit — rekod sedia ada dimuatkan, ubah & simpan semula':'Belum disimpan';
+    $('#save-info').style.color='';
     $('#btn-simpan').textContent=s?'Kemaskini Rekod':'Simpan Rekod';
   }catch(e){toast('Ralat memuat: '+e.message);}
   renderRoster();
