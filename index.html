@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistem Kehadiran Kelas Tambahan</title>
-<meta property="og:title" content="Sistem Kehadiran Kelas Tambahan">
+<title>Sistem Kehadiran SMK Batu Maung</title>
+<meta property="og:title" content="Sistem Kehadiran SMK Batu Maung">
 <meta property="og:description" content="SMK Batu Maung — rekod kehadiran pelajar, laporan & analisis kekerapan tidak hadir.">
 <meta property="og:image" content="https://kehadiran-f2u.pages.dev/og.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://kehadiran-f2u.pages.dev/">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Sistem Kehadiran Kelas Tambahan">
+<meta name="twitter:title" content="Sistem Kehadiran SMK Batu Maung">
 <meta name="twitter:image" content="https://kehadiran-f2u.pages.dev/og.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,14 +24,22 @@
   .wrap{max-width:780px;margin:0 auto;padding:0 16px 120px}
   .hidden{display:none!important}
 
-  .auth-screen{min-height:100vh;display:grid;place-items:center;padding:20px}
-  .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:var(--shadow)}
-  .auth-card .logo{width:48px;height:48px;border-radius:12px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800;margin-bottom:16px}
-  .auth-card h2{margin:0 0 4px;font-size:20px}.auth-card p{margin:0 0 20px;font-size:13px;color:var(--muted)}
-  .auth-card label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 5px}
-  .auth-card input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px}
-  .auth-card input:focus{outline:2px solid var(--brand);outline-offset:-1px}
+  .auth-screen{min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(145deg,#0d1b3e 0%,#1a3a6e 50%,#0d1b3e 100%)}
+  .auth-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 0}
+  .auth-logo-wrap{width:110px;height:110px;border-radius:22px;background:#fff;display:grid;place-items:center;padding:6px;box-shadow:0 8px 32px rgba(0,0,0,.3);margin-bottom:20px;overflow:hidden}
+  .auth-logo-wrap img{width:100%;height:100%;object-fit:contain}
+  .auth-school{color:#fff;font-size:22px;font-weight:800;letter-spacing:.5px;text-align:center;margin-bottom:4px}
+  .auth-sub{color:rgba(255,255,255,.6);font-size:13px;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+  .auth-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:5px 14px;color:rgba(255,255,255,.8);font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:32px}
+  .auth-card{background:#fff;border-radius:28px 28px 0 0;padding:32px 24px 40px;box-shadow:0 -8px 40px rgba(0,0,0,.2);width:100%;max-width:500px;margin:0 auto}
+  .auth-card-title{font-size:18px;font-weight:800;color:var(--ink);margin:0 0 4px}
+  .auth-card-sub{font-size:13px;color:var(--muted);margin:0 0 24px}
+  .auth-card label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px;letter-spacing:.5px;text-transform:uppercase}
+  .auth-input-wrap{position:relative;margin-bottom:20px}
+  .auth-input-wrap input{width:100%;padding:15px 16px;border:2px solid var(--line);border-radius:14px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink);transition:border-color .15s}
+  .auth-input-wrap input:focus{outline:none;border-color:var(--brand);background:#fff}
   .auth-note{font-size:12px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.5}
+  .auth-screen .logo{display:none}
 
   header.app{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
   .head-inner{max-width:780px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
@@ -125,7 +133,7 @@
   <div class="auth-card">
     <img class="logo" src="logo.jpg" alt="SMK Batu Maung">
     <h2>Log Masuk Guru</h2>
-    <p>Sistem Kehadiran Kelas Tambahan · SMK Batu Maung</p>
+    <p>Sistem Kehadiran SMK Batu Maung · SMK Batu Maung</p>
     <label>No. Kad Pengenalan</label>
     <input type="text" id="lg-ic" inputmode="numeric" placeholder="cth: 900101071234" autocomplete="username">
     <button class="btn btn-primary" id="lg-btn" style="width:100%;margin-top:18px">Log Masuk</button>
@@ -137,7 +145,7 @@
 <header class="app">
   <div class="head-inner">
     <img class="logo" src="logo.jpg" alt="SMK Batu Maung">
-    <div><h1>Kehadiran Kelas Tambahan</h1><p id="who-am-i">—</p></div>
+    <div><h1 style="font-size:16px">Sistem Kehadiran</h1><p id="who-am-i" style="font-size:11px;color:var(--muted)">—</p></div>
     <div class="sp"></div>
     <button class="hbtn" id="btn-logout">Log Keluar</button>
   </div>
@@ -381,7 +389,7 @@ function fillKelasDropdown(){
   const cls=classesForTeacher();
   let html=`<optgroup label="Kelas Tingkatan">`+cls.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')+`</optgroup>`;
   const grps=state.groups||[];
-  if(grps.length) html+=`<optgroup label="Kumpulan Kelas Tambahan">`+grps.map(g=>`<option value="grp:${g.id}">${esc(g.name)}${g.subject?' — '+esc(g.subject):''}</option>`).join('')+`</optgroup>`;
+  if(grps.length) html+=`<optgroup label="Kumpulan Subjek">`+grps.map(g=>`<option value="grp:${g.id}">${esc(g.name)}${g.subject?' — '+esc(g.subject):''}</option>`).join('')+`</optgroup>`;
   $('#kelas').innerHTML=html||'<option value="">(Tiada)</option>';
   if(state.teacher?.class_name&&cls.includes(state.teacher.class_name))$('#kelas').value=state.teacher.class_name;
 }
