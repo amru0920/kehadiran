@@ -735,25 +735,39 @@ async function dzLapor(){
   $('#dz-cls').onchange=dzRun; $('#dz-q').oninput=dzRun;
   dzRun();
 }
+let dzData=[];
 async function dzRun(){
   const box=$('#dz-lout');box.innerHTML='<div class="empty">Memuat\u2026</div>';
   const [from,to]=dzRange(dzPeriod());const cls=$('#dz-cls').value;const q=($('#dz-q').value||'').trim().toLowerCase();
   let data=[];try{data=await fetchOffences(from,to,cls);}catch(e){box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';return;}
   if(q)data=data.filter(o=>(o.student_name||'').toLowerCase().includes(q)||(o.student_nokp||'').includes(q));
+  dzData=data;
   if(!data.length){box.innerHTML='<div class="empty">Tiada rekod kesalahan untuk tapisan ini.</div>';return;}
-  const byType={},byStu={};
-  data.forEach(o=>{byType[o.offence_type]=(byType[o.offence_type]||0)+1;const k=o.student_nokp;byStu[k]=byStu[k]||{name:o.student_name,kelas:o.class_name,count:0};byStu[k].count++;});
-  const typeRows=Object.entries(byType).sort((a,b)=>b[1]-a[1]);
+  const byStu={};
+  data.forEach(o=>{const k=o.student_nokp;byStu[k]=byStu[k]||{nokp:k,name:o.student_name,kelas:o.class_name,count:0,last:o.odate};byStu[k].count++;});
   const stuRows=Object.values(byStu).sort((a,b)=>b.count-a.count);
-  box.innerHTML=`<div class="cards"><div class="mcard"><div class="n">${data.length}</div><div class="l">Jumlah kesalahan</div></div>
-      <div class="mcard"><div class="n">${stuRows.length}</div><div class="l">Murid terlibat</div></div>
-      <div class="mcard"><div class="n">${typeRows.length}</div><div class="l">Jenis berbeza</div></div></div>
-    <h4 style="margin:14px 2px 6px;color:var(--brand)">Ikut Jenis Kesalahan</h4>
-    <table class="rpt-table"><tr><th>Jenis</th><th>Kali</th></tr>${typeRows.map(([t,n])=>'<tr><td>'+esc(t)+'</td><td><span class="pill">'+n+'</span></td></tr>').join('')}</table>
-    <h4 style="margin:16px 2px 6px;color:var(--brand)">Ikut Individu</h4>
-    <table class="rpt-table"><tr><th>Murid</th><th>Kelas</th><th>Kali</th></tr>${stuRows.map(s=>'<tr class="'+(s.count>=3?'hot':'')+'"><td><b>'+esc(s.name||'')+'</b></td><td>'+esc(s.kelas||'')+'</td><td><span class="pill">'+s.count+'</span></td></tr>').join('')}</table>
-    <h4 style="margin:16px 2px 6px;color:var(--brand)">Butiran</h4>
-    <table class="rpt-table"><tr><th>Tarikh</th><th>Murid</th><th>Kelas</th><th>Kesalahan</th><th>Direkod</th></tr>${data.map(o=>'<tr><td>'+esc(o.odate||'')+'</td><td>'+esc(o.student_name||'')+'</td><td>'+esc(o.class_name||'')+'</td><td>'+esc(o.offence_type)+'</td><td>'+esc(o.recorded_name||'')+'</td></tr>').join('')}</table>`;
+  box.innerHTML=`<p class="legend">${stuRows.length} murid \u00b7 ${data.length} kesalahan. Tekan nama untuk butiran.</p>`+
+    stuRows.map(s=>{const col=s.count>=5?'var(--absent)':s.count>=3?'#e8743b':s.count>=2?'var(--warn)':'var(--muted)';
+      return `<div class="item" data-nokp="${esc(s.nokp)}" style="cursor:pointer;border-left:4px solid ${col}">
+        <span class="grow"><span class="nm">${esc(s.name||'-')}</span><br><span class="sub">${esc(s.kelas||'')}</span></span>
+        <span class="pill" style="background:${col};color:#fff">${s.count} kesalahan</span></div>`;}).join('');
+  box.onclick=e=>{const it=e.target.closest('[data-nokp]');if(it)dzStudent(it.dataset.nokp);};
+}
+function dzStudent(nokp){
+  const box=$('#dz-lout');
+  const rows=dzData.filter(o=>o.student_nokp===nokp).sort((a,b)=>(b.odate||'').localeCompare(a.odate||''));
+  const s=rows[0]||{};
+  const byType={};rows.forEach(o=>byType[o.offence_type]=(byType[o.offence_type]||0)+1);
+  box.innerHTML=`<button class="btn btn-ghost" id="dz-back" style="margin-bottom:10px">\u2190 Kembali</button>
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)">
+      <div style="font-size:17px;font-weight:800">${esc(s.student_name||'-')}</div>
+      <div style="font-size:13px;color:var(--muted)">${esc(nokp)} \u00b7 ${esc(s.class_name||'')}</div>
+      <div style="margin-top:8px"><span class="pill" style="background:var(--absent);color:#fff">${rows.length} kesalahan</span></div>
+      <div style="margin-top:8px;font-size:13px;color:var(--muted)">${Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([t,n])=>esc(t)+' \u00d7'+n).join(' \u00b7 ')}</div>
+    </div>
+    <table class="rpt-table"><tr><th>Tarikh</th><th>Kesalahan</th><th>Catatan</th><th>Direkod</th></tr>
+    ${rows.map(o=>'<tr><td>'+esc(o.odate||'')+'</td><td><b>'+esc(o.offence_type)+'</b></td><td>'+esc(o.note||'-')+'</td><td>'+esc(o.recorded_name||'')+'</td></tr>').join('')}</table>`;
+  $('#dz-back').onclick=dzRun;
 }
 async function dzJenis(){
   const box=$('#dz-out');box.innerHTML='<div class="empty">Memuat\u2026</div>';
