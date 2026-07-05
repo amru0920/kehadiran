@@ -253,7 +253,6 @@
     <div id="lt-lapor" class="hidden">
       <div class="lap-head">
         <div class="field"><label>Kelas</label><select id="ltr-kelas"></select></div>
-        <div class="field"><label>Guru</label><select id="ltr-guru"></select></div>
         <div class="field" style="flex:1;min-width:150px"><label>Cari nama latihan</label><input type="text" id="ltr-q" placeholder="cth: Bab 3"></div>
       </div>
       <div id="ltr-out"></div>
@@ -771,16 +770,15 @@ let LTR_CACHE=[];
 async function ltReport(){
   const cls=[...new Set([...allClassList(),...(state.groups||[]).map(g=>g.name)])].sort();
   $('#ltr-kelas').innerHTML='<option value="">Semua kelas</option>'+cls.map(c=>`<option>${esc(c)}</option>`).join('');
-  const teachers=Object.entries(state.teachersByIc||{}).sort((a,b)=>(a[1]||'').localeCompare(b[1]||''));
-  $('#ltr-guru').innerHTML='<option value="">Semua guru</option>'+teachers.map(([ic,nm])=>`<option value="${esc(ic)}">${esc(nm)}</option>`).join('');
-  $('#ltr-kelas').onchange=ltrRun;$('#ltr-guru').onchange=ltrRun;$('#ltr-q').oninput=ltrRun;
+  $('#ltr-kelas').onchange=ltrRun;$('#ltr-q').oninput=ltrRun;
   $('#ltr-out').innerHTML='<div class="empty">Memuat…</div>';
   try{LTR_CACHE=await DB.exercisesList();}catch(e){$('#ltr-out').innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';return;}
   ltrRun();
 }
 function ltrRun(){
-  const cls=$('#ltr-kelas').value,guru=$('#ltr-guru').value,q=($('#ltr-q').value||'').trim().toLowerCase();
-  let list=LTR_CACHE.filter(x=>(!cls||x.class_name===cls)&&(!guru||x.teacher_ic===guru)&&(!q||(x.name||'').toLowerCase().includes(q)));
+  const cls=$('#ltr-kelas').value,q=($('#ltr-q').value||'').trim().toLowerCase();
+  const myIc=state.teacher?.ic||null;
+  let list=LTR_CACHE.filter(x=>(!myIc||x.teacher_ic===myIc)&&(!cls||x.class_name===cls)&&(!q||(x.name||'').toLowerCase().includes(q)));
   if(!list.length){$('#ltr-out').innerHTML='<div class="empty"><strong>Tiada latihan</strong>Cuba tukar tapisan.</div>';return;}
   $('#ltr-out').innerHTML='<p class="legend">'+list.length+' latihan. Tekan untuk lihat siapa dapat & belum.</p>'+list.map(x=>{
     const total=rosterForClassName(x.class_name).length||0;
