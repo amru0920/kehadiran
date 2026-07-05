@@ -116,13 +116,13 @@
     <button class="logout" id="btn-logout">Log Keluar</button>
   </div>
   <div class="tabs">
-    <button class="tab active" data-tab="guru">Guru</button>
-    <button class="tab" data-tab="pelajar">Pelajar</button>
-    <button class="tab" data-tab="kumpulan">Kumpulan</button>
-    <button class="tab" data-tab="data">Laporan &amp; Analisis</button>
-    <button class="tab" data-tab="hukuman">Hukuman</button>
-    <button class="tab" data-tab="disiplin">Disiplin</button>
-    <button class="tab" data-tab="latihan">Latihan</button>
+    <button class="tab active" data-tab="guru">GURU</button>
+    <button class="tab" data-tab="pelajar">PELAJAR</button>
+    <button class="tab" data-tab="kumpulan">KUMPULAN</button>
+    <button class="tab" data-tab="data">LAPORAN &amp; ANALISIS</button>
+    <button class="tab" data-tab="hukuman">HUKUMAN</button>
+    <button class="tab" data-tab="disiplin">DISIPLIN</button>
+    <button class="tab" data-tab="latihan">e-SEBAMA</button>
   </div>
 </header>
 <div class="wrap">
@@ -751,10 +751,11 @@ async function laDetail(id){
   const buckets={0:[],1:[],2:[],3:[]};roster.forEach(s=>{const st=stMap[s.id]?.status||0;buckets[st].push({s,rec:stMap[s.id]||{}});});
   const LAB=['Belum Ambil','Ambil','Hantar','Semak'];const COL=['#9aa3b2','var(--warn)','var(--brand)','var(--present)'];
   const sec=lvl=>{const arr=buckets[lvl];if(!arr.length)return '';return `<h4 style="font-size:13px;margin:14px 2px 6px;color:${COL[lvl]}">${LAB[lvl]} (${arr.length})</h4>`+arr.map(({s,rec})=>{const d=[];if(rec.ambil_date)d.push('A:'+rec.ambil_date.slice(5));if(rec.hantar_date)d.push('H:'+rec.hantar_date.slice(5));if(rec.semak_date)d.push('S:'+rec.semak_date.slice(5));return `<div class="item" style="border-left:4px solid ${COL[lvl]}"><span class="grow"><span class="nm">${esc(s.name)}</span><br><span class="sub">${esc(s.nokp)}${d.length?' · '+d.join(' '):''}</span></span></div>`;}).join('');};
-  box.innerHTML=`<button class="btn btn-ghost" id="la-back" style="margin-bottom:10px">← Kembali</button>
+  box.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:10px"><button class="btn btn-ghost" id="la-back">← Kembali</button><button class="btn btn-ghost" id="la-del" style="color:var(--absent)">Padam Latihan</button></div>
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:6px;box-shadow:var(--shadow)"><div style="font-size:16px;font-weight:800">${esc(ex.name)}</div><div style="font-size:13px;color:var(--muted)">${esc(ex.class_name)} · ${esc(ex.subject||'-')} · ${esc(ex.edate||'')} · ${esc(tName(ex.teacher_ic||'?'))}</div></div>
     ${sec(0)}${sec(1)}${sec(2)}${sec(3)}`;
   $('#la-back').onclick=laLapor;
+  $('#la-del').onclick=async()=>{if(confirm('Padam latihan ini + semua rekod status? Tak boleh undo.')){try{const {error}=await sb.from('exercises').delete().eq('id',id);if(error)throw error;toast('Latihan dipadam');laLapor();}catch(e){toast('Ralat: '+e.message);}}};
 }
 async function laRingkas(){
   const box=$('#la-body');box.innerHTML='<div class="empty">Memuat…</div>';

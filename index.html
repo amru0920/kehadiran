@@ -310,6 +310,7 @@ const DB={
   async getExercise(cn,subj,name,edate){const{data,error}=await sb.from('exercises').select('id,exercise_status(student_id,status,ambil_date,hantar_date,semak_date)').eq('class_name',cn).eq('subject',subj||'').eq('name',name).eq('edate',edate).maybeSingle();if(error)throw error;return data;},
   async exercisesList(){const{data,error}=await sb.from('exercises').select('*, exercise_status(status)').order('edate',{ascending:false});if(error)throw error;return data||[];},
   async exerciseDetail(id){const{data,error}=await sb.from('exercises').select('*, exercise_status(student_id,status,ambil_date,hantar_date,semak_date)').eq('id',id).single();if(error)throw error;return data;},
+  async delExercise(id){const{error}=await sb.from('exercises').delete().eq('id',id);if(error)throw error;},
   async saveExercise(ex,statuses){
     const{data:e,error:e1}=await sb.from('exercises').upsert({name:ex.name,class_name:ex.class_name,subject:ex.subject||'',teacher_ic:ex.teacher_ic,teacher_name:ex.teacher_name,edate:ex.edate},{onConflict:'class_name,subject,name,edate'}).select('id').single();
     if(e1)throw e1;
@@ -803,13 +804,14 @@ async function ltrDetail(id){
     return `<h4 style="font-size:13px;margin:14px 2px 6px;color:${COL[lvl]}">${LAB[lvl]} (${arr.length})</h4>`+
       arr.map(({s,rec})=>{const d=[];if(rec.ambil_date)d.push('A:'+rec.ambil_date.slice(5));if(rec.hantar_date)d.push('H:'+rec.hantar_date.slice(5));if(rec.semak_date)d.push('S:'+rec.semak_date.slice(5));
         return `<div class="dcard" style="border-left:4px solid ${COL[lvl]}"><div class="info"><div class="cn">${esc(s.name)}</div><div class="det">${esc(s.nokp)}${d.length?' · '+d.join(' '):''}</div></div></div>`;}).join('');};
-  $('#ltr-out').innerHTML=`<button class="btn btn-ghost" id="ltr-back" style="margin-bottom:10px">← Kembali</button>
+  $('#ltr-out').innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:10px"><button class="btn btn-ghost" id="ltr-back">← Kembali</button><button class="btn btn-ghost" id="ltr-del" style="color:var(--absent)">Padam Latihan</button></div>
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:6px;box-shadow:var(--shadow)">
       <div style="font-size:16px;font-weight:800">${esc(ex.name)}</div>
       <div style="font-size:13px;color:var(--muted)">${esc(ex.class_name)} · ${esc(ex.subject||'-')} · ${esc(ex.edate||'')} · ${esc(tName(ex.teacher_ic))}</div>
     </div>
     ${sec(0)}${sec(1)}${sec(2)}${sec(3)}`;
   $('#ltr-back').onclick=ltReport;
+  $('#ltr-del').onclick=async()=>{if(confirm('Padam latihan ini + semua rekod status? Tak boleh undo.')){try{await DB.delExercise(id);toast('Latihan dipadam');ltReport();}catch(e){toast('Ralat: '+e.message);}}};
 }
 function ltRosterResolve(){
   const val=$('#lt-kelas').value||'';
