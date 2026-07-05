@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin · Sistem Kehadiran</title>
+<title>Admin · Kehadiran Kelas Tambahan</title>
 <meta property="og:title" content="Admin · Kehadiran Kelas Tambahan">
 <meta property="og:description" content="SMK Batu Maung — rekod kehadiran pelajar, laporan & analisis kekerapan tidak hadir.">
 <meta property="og:image" content="https://kehadiran-f2u.pages.dev/og.png">
@@ -110,18 +110,19 @@
 <header class="app">
   <div class="head-inner">
     <img class="logo" src="logo.jpg" alt="SMK Batu Maung">
-    <div><h1>Panel Admin</h1><p>SISTEM KEHADIRAN</p></div>
+    <div><h1>Panel Admin</h1><p>Kehadiran Kelas Tambahan</p></div>
     <div class="sp"></div>
     <a href="index.html" class="logout" style="text-decoration:none;margin-right:6px">App Guru</a>
-    <button class="logout" id="btn-logout">LOG KELUAR</button>
+    <button class="logout" id="btn-logout">Log Keluar</button>
   </div>
   <div class="tabs">
-    <button class="tab active" data-tab="guru">GURU</button>
-    <button class="tab" data-tab="pelajar">PELAJAR</button>
-    <button class="tab" data-tab="kumpulan">KUMPULAN</button>
-    <button class="tab" data-tab="data">LAPORAN &amp; ANALISIS</button>
-    <button class="tab" data-tab="hukuman">HUKUMAN</button>
-    <button class="tab" data-tab="disiplin">DISIPLIN</button>
+    <button class="tab active" data-tab="guru">Guru</button>
+    <button class="tab" data-tab="pelajar">Pelajar</button>
+    <button class="tab" data-tab="kumpulan">Kumpulan</button>
+    <button class="tab" data-tab="data">Laporan &amp; Analisis</button>
+    <button class="tab" data-tab="hukuman">Hukuman</button>
+    <button class="tab" data-tab="disiplin">Disiplin</button>
+    <button class="tab" data-tab="latihan">Latihan</button>
   </div>
 </header>
 <div class="wrap">
@@ -129,6 +130,7 @@
   <div id="tab-pelajar" class="hidden"></div>
   <div id="tab-kumpulan" class="hidden"></div>
   <div id="tab-disiplin" class="hidden"></div>
+  <div id="tab-latihan" class="hidden"></div>
   <div id="tab-data" class="hidden"></div>
   <div id="tab-hukuman" class="hidden"></div>
 </div>
@@ -705,6 +707,25 @@ async function hkProfil(d){
   }catch(e){box.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';}
 }
 
+/* ===== LATIHAN: track cikgu bagi berapa banyak ikut kelas ===== */
+async function renderLatihanAdmin(){
+  $('#tab-latihan').innerHTML='<div class="card"><h3>Rekod Latihan Guru</h3><p class="legend">Bilangan latihan yang setiap guru beri, dipecahkan ikut kelas. Isyarat aktiviti — bukan ukuran kualiti.</p><div id="la-out"><div class="empty">Memuat…</div></div></div>';
+  let ex=[];
+  try{const {data,error}=await sb.from('exercises').select('teacher_ic,teacher_name,class_name,subject,name,edate');if(error)throw error;ex=data||[];}catch(e){$('#la-out').innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';return;}
+  if(!ex.length){$('#la-out').innerHTML='<div class="empty">Tiada rekod latihan lagi.</div>';return;}
+  // group by teacher -> class
+  const byT={};
+  ex.forEach(x=>{const ic=x.teacher_ic||'?';const nm=x.teacher_name||tName(ic);byT[ic]=byT[ic]||{name:nm,total:0,classes:{}};byT[ic].total++;byT[ic].classes[x.class_name]=(byT[ic].classes[x.class_name]||0)+1;});
+  const teachers=Object.values(byT).sort((a,b)=>b.total-a.total);
+  $('#la-out').innerHTML=`<div class="cards"><div class="mcard"><div class="n">${ex.length}</div><div class="l">Jumlah latihan</div></div><div class="mcard"><div class="n">${teachers.length}</div><div class="l">Guru terlibat</div></div></div>`+
+    teachers.map(t=>{
+      const rows=Object.entries(t.classes).sort((a,b)=>b[1]-a[1]).map(([cn,n])=>`<tr><td>${esc(cn)}</td><td><span class="pill">${n}</span></td></tr>`).join('');
+      return `<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px"><b style="font-size:15px">${esc(t.name)}</b><span class="pill g">${t.total} latihan</span></div>
+        <table class="rpt-table"><tr><th>Kelas</th><th>Bilangan</th></tr>${rows}</table>
+      </div>`;}).join('');
+}
+
 /* ===== DISIPLIN (kesalahan ringan) ===== */
 async function renderDisiplinAdmin(){
   try{ await loadStudents(); }catch(e){ toast('Ralat: '+e.message); }
@@ -807,7 +828,8 @@ document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>
   $('#tab-hukuman').classList.toggle('hidden',k!=='hukuman');
   $('#tab-kumpulan').classList.toggle('hidden',k!=='kumpulan');
   $('#tab-disiplin').classList.toggle('hidden',k!=='disiplin');
-  if(k==='guru')renderGuru();if(k==='pelajar')renderPelajar();if(k==='data')renderData();if(k==='hukuman')renderHukuman();if(k==='kumpulan')renderKumpulan();if(k==='disiplin')renderDisiplinAdmin();
+  $('#tab-latihan').classList.toggle('hidden',k!=='latihan');
+  if(k==='guru')renderGuru();if(k==='pelajar')renderPelajar();if(k==='data')renderData();if(k==='hukuman')renderHukuman();if(k==='kumpulan')renderKumpulan();if(k==='disiplin')renderDisiplinAdmin();if(k==='latihan')renderLatihanAdmin();
 }));
 
 boot();
