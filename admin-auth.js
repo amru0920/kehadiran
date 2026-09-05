@@ -37,4 +37,4 @@ $('#adm-login').onclick=async()=>{
 };
 $('#adm-ic').addEventListener('keydown',e=>{if(e.key==='Enter')$('#adm-login').click();});
 $('#btn-logout').onclick=async()=>{await sb.auth.signOut();location.reload();};
-function enterApp(){ const ls=$('#login-screen'); ls.style.display='none'; ls.classList.add('hidden'); $('#app').classList.remove('hidden'); window.scrollTo(0,0); renderGuru(); }
+function enterApp(){ const ls=$('#login-screen'); ls.style.display='none'; ls.classList.add('hidden'); $('#app').classList.remove('hidden'); window.scrollTo(0,0); navEnter(); }

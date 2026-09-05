@@ -38,8 +38,24 @@
   .logout{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:13px;padding:7px 13px;border-radius:9px;cursor:pointer}
   .tabs{display:flex;gap:4px;max-width:780px;margin:0 auto;padding:0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
-  .tab{flex:0 0 auto;white-space:nowrap;padding:11px 14px;border:0;background:none;font:inherit;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent}
+  .tab{flex:1 1 auto;white-space:nowrap;padding:11px 12px;border:0;background:none;font:inherit;font-weight:600;font-size:13.5px;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;text-align:center}
   .tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+
+  /* Modul: Pentadbiran / Kurikulum / HEM / Kokurikulum */
+  .modbar{display:flex;gap:6px;max-width:780px;margin:0 auto;padding:10px 12px 0}
+  .mod{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 6px;border:1px solid var(--line);background:var(--surface);border-radius:11px;font:inherit;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mod .mi{font-size:14px;line-height:1}
+  .mod.active{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(47,95,224,.28)}
+  .soon{background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);padding:18px 16px;margin-top:14px}
+  .soon h3{margin:0 0 6px;font-size:15px;font-weight:800}
+  .soon p{margin:0 0 10px;font-size:13px;color:var(--muted);line-height:1.55}
+  .soon ul{margin:0;padding-left:18px;font-size:13px;line-height:1.7}
+  .soon .tagsoon{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.4px;padding:3px 9px;border-radius:999px;background:#fff4e2;color:var(--warn);margin-bottom:8px}
+  @media (max-width:520px){
+    .mod{font-size:11px;padding:8px 4px;gap:3px}
+    .mod .mi{font-size:12px}
+    .tab{font-size:12.5px;padding:10px 6px}
+  }
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:16px 0 12px;box-shadow:var(--shadow)}
   .card h3{margin:0 0 10px;font-size:14px}
   .addrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
@@ -130,15 +146,13 @@
     <a href="index.html" class="logout" style="text-decoration:none;margin-right:6px">App Guru</a>
     <button class="logout" id="btn-logout">Log Keluar</button>
   </div>
-  <div class="tabs">
-    <button class="tab active" data-tab="guru">Guru</button>
-    <button class="tab" data-tab="pelajar">Pelajar</button>
-    <button class="tab" data-tab="kumpulan">Kumpulan</button>
-    <button class="tab" data-tab="data">Laporan &amp; Analisis</button>
-    <button class="tab" data-tab="hukuman">Hukuman</button>
-    <button class="tab" data-tab="disiplin">Disiplin</button>
-    <button class="tab" data-tab="latihan">Latihan</button>
+  <div class="modbar" id="modbar">
+    <button class="mod active" data-mod="pentadbiran"><span class="mi">⚙</span>Pentadbiran</button>
+    <button class="mod" data-mod="kurikulum"><span class="mi">📘</span>Kurikulum</button>
+    <button class="mod" data-mod="hem"><span class="mi">👤</span>HEM</button>
+    <button class="mod" data-mod="koku"><span class="mi">🏅</span>Kokurikulum</button>
   </div>
+  <div class="tabs" id="subtabs"></div>
 </header>
 <div class="wrap">
   <div id="tab-guru"></div>
@@ -148,6 +162,8 @@
   <div id="tab-latihan" class="hidden"></div>
   <div id="tab-data" class="hidden"></div>
   <div id="tab-hukuman" class="hidden"></div>
+  <div id="tab-koku" class="hidden"></div>
+  <div id="tab-kokuahli" class="hidden"></div>
 </div>
 </div>
 
@@ -164,6 +180,7 @@
 <script src="admin-hukuman.js"></script>
 <script src="admin-latihan.js"></script>
 <script src="admin-disiplin.js"></script>
+<script src="admin-koku.js"></script>
 <script src="admin-nav.js"></script>
 </body>
 </html>

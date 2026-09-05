@@ -44,6 +44,11 @@ const DB={
   async listDiscipline(nokp){const{data,error}=await sb.from('discipline').select('*').eq('student_nokp',nokp).order('created_at',{ascending:false});if(error)throw error;return data;},
   async addDiscipline(d){const{error}=await sb.from('discipline').insert(d);if(error)throw error;},
   async delDiscipline(id){const{error}=await sb.from('discipline').delete().eq('id',id);if(error)throw error;},
+  /* ===== KOKURIKULUM ===== */
+  async kokuUnits(){const{data,error}=await sb.from('koku_units').select('*').eq('active',true).order('category').order('sort');if(error)throw error;return data||[];},
+  async kokuMembersAll(){const{data,error}=await sb.from('koku_members').select('unit_id,student_id,category,role');if(error)throw error;return data||[];},
+  async kokuMembersByUnit(unitId){const{data,error}=await sb.from('koku_members').select('id,role,student_id,students(name,nokp,kelas)').eq('unit_id',unitId);if(error)throw error;return data||[];},
+  async kokuByStudent(studentId){const{data,error}=await sb.from('koku_members').select('role,category,koku_units(id,name,category,advisors,meet_day)').eq('student_id',studentId);if(error)throw error;return data||[];},
   async laporanSessions(kelas,from,to){
     const{data,error}=await sb.from('attendance_sessions')
       .select('id,date,subject,session_time,class_name,absentees(student_id,reason,students(name,nokp,kelas))')
