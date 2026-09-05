@@ -1,0 +1,43 @@
+{
+  "name": "Sistem Kehadiran SMK Batu Maung",
+  "short_name": "Kehadiran",
+  "description": "Kehadiran kelas tambahan, e-SEBAMA, disiplin & kokurikulum SMK Batu Maung",
+  "lang": "ms",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1b3e",
+  "theme_color": "#2f5fe0",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ambil Kehadiran",
+      "short_name": "Kehadiran",
+      "url": "./index.html?go=ambil",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "e-SEBAMA",
+      "short_name": "e-SEBAMA",
+      "url": "./index.html?go=latihan",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Disiplin",
+      "short_name": "Disiplin",
+      "url": "./index.html?go=disiplin",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Kokurikulum",
+      "short_name": "Kokurikulum",
+      "url": "./index.html?go=koku-unit",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

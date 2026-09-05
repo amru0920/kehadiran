@@ -40,6 +40,13 @@ function navRestore(){
     });
   }catch(e){}
 }
+/* pintasan dari ikon skrin utama: index.html?go=ambil */
+function navFromUrl(){
+  try{
+    const g=new URLSearchParams(location.search).get('go');
+    return ALL_TABS.includes(g)?g:null;
+  }catch(e){return null;}
+}
 function navSave(){try{localStorage.setItem('nav.v1',JSON.stringify({mod:nav.mod,last:nav.last}));}catch(e){}}
 
 function showTab(k){
@@ -69,4 +76,8 @@ $('#tab-admin-btn').onclick=()=>{if(state.teacher?.is_admin)window.location.href
 
 navRestore();
 renderSubtabs();
-boot().then(()=>{ if(!$('#app').classList.contains('hidden')) openModule(nav.mod); });
+boot().then(()=>{
+  if($('#app').classList.contains('hidden'))return;
+  const g=navFromUrl();
+  if(g)showTab(g); else openModule(nav.mod);
+});
