@@ -9,6 +9,7 @@ const MODULES={
     {k:'pelajar', l:'Profil Murid'},
     {k:'disiplin',l:'Disiplin'}]},
   koku:{label:'Kokurikulum',tabs:[
+    {k:'koku-kehadiran',l:'Kehadiran'},
     {k:'koku-unit',     l:'Ahli Unit'},
     {k:'koku-murid',    l:'Semak Murid'},
     {k:'koku-ringkasan',l:'Ringkasan'}]}
@@ -21,6 +22,7 @@ const RENDER={
   pelajar:()=>renderPelajar(),
   disiplin:()=>renderDisiplin(),
   latihan:()=>renderLatihan(),
+  'koku-kehadiran':()=>renderKoku('kehadiran'),
   'koku-unit':()=>renderKoku('unit'),
   'koku-murid':()=>renderKoku('murid'),
   'koku-ringkasan':()=>renderKoku('ringkasan')
@@ -57,6 +59,7 @@ function showTab(k){
   renderSubtabs();
   ALL_TABS.forEach(t=>{const el=$('#tab-'+t);if(el)el.classList.toggle('hidden',t!==k);});
   $('#savebar').classList.toggle('hidden',k!=='ambil');
+  $('#savebar-koku').classList.toggle('hidden',k!=='koku-kehadiran');
   window.scrollTo(0,0);
   (RENDER[k]||(()=>{}))();
 }

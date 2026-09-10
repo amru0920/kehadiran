@@ -48,6 +48,17 @@ const DB={
   async kokuUnits(){const{data,error}=await sb.from('koku_units').select('*').eq('active',true).order('category').order('sort');if(error)throw error;return data||[];},
   async kokuMembersAll(){const{data,error}=await sb.from('koku_members').select('unit_id,student_id,category,role');if(error)throw error;return data||[];},
   async kokuMembersByUnit(unitId){const{data,error}=await sb.from('koku_members').select('id,role,student_id,students(name,nokp,kelas)').eq('unit_id',unitId);if(error)throw error;return data||[];},
+  async kokuGetSession(unitId,sdate){const{data,error}=await sb.from('koku_sessions').select('id,activity,session_time,recorded_name,koku_absentees(student_id,reason)').eq('unit_id',unitId).eq('sdate',sdate).maybeSingle();if(error)throw error;return data;},
+  async kokuSaveSession(ses,absent){
+    const{data:s,error:e1}=await sb.from('koku_sessions').upsert({unit_id:ses.unit_id,sdate:ses.sdate,activity:ses.activity||null,session_time:ses.session_time||null,recorded_by:ses.recorded_by||null,recorded_name:ses.recorded_name||null},{onConflict:'unit_id,sdate'}).select('id').single();
+    if(e1)throw e1;
+    const{error:e2}=await sb.from('koku_absentees').delete().eq('session_id',s.id);if(e2)throw e2;
+    if(absent.length){const{error:e3}=await sb.from('koku_absentees').insert(absent.map(a=>({session_id:s.id,student_id:a.student_id,reason:a.reason})));if(e3)throw e3;}
+    return s.id;
+  },
+  async kokuSessionsByUnit(unitId){const{data,error}=await sb.from('koku_sessions').select('id,sdate,activity,session_time,recorded_name,koku_absentees(student_id,reason)').eq('unit_id',unitId).order('sdate',{ascending:false});if(error)throw error;return data||[];},
+  async kokuSessionsAll(){const{data,error}=await sb.from('koku_sessions').select('id,unit_id,sdate,koku_absentees(student_id)');if(error)throw error;return data||[];},
+  async kokuDelSession(id){const{error}=await sb.from('koku_sessions').delete().eq('id',id);if(error)throw error;},
   async kokuByStudent(studentId){const{data,error}=await sb.from('koku_members').select('role,category,koku_units(id,name,category,advisors,meet_day)').eq('student_id',studentId);if(error)throw error;return data||[];},
   async laporanSessions(kelas,from,to){
     const{data,error}=await sb.from('attendance_sessions')

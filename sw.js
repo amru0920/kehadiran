@@ -12,7 +12,7 @@ const LIB   = VER + '-lib';
 const ASSETS = [
   './', './index.html', './admin.html', './manifest.json',
   './config.js', './db.js', './state.js', './auth.js', './ambil.js', './data.js',
-  './laporan.js', './pelajar.js', './disiplin.js', './latihan.js', './koku.js', './nav.js',
+  './laporan.js', './pelajar.js', './disiplin.js', './latihan.js', './koku.js', './cetak.js', './nav.js',
   './admin-config.js', './admin-auth.js', './admin-guru.js', './admin-pelajar.js',
   './admin-laporan.js', './admin-kumpulan.js', './admin-hukuman.js', './admin-latihan.js',
   './admin-disiplin.js', './admin-koku.js', './admin-nav.js', './pwa.js',

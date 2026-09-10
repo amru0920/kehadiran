@@ -82,11 +82,12 @@ async function drProfil(d){
   const box=$('#dr-out');box.innerHTML='<div class="empty">Memuat…</div>';
   let list=[],types=[];
   try{const o=await sb.from('offences').select('*').eq('student_nokp',d.nokp).order('odate',{ascending:false});list=o.data||[];const t=await sb.from('offence_types').select('name').eq('active',true).order('name');types=(t.data||[]).map(x=>x.name);}catch(e){toast('Ralat: '+e.message);}
-  box.innerHTML=`<button class="btn btn-ghost" id="dr-back" style="margin-bottom:10px">← Kembali</button>
+  box.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-ghost" id="dr-back">← Kembali</button><button class="btn btn-primary" id="dr-cetak">🖨 Cetak Borang</button></div>
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow)"><b>${esc(d.name)}</b><br><span class="sub">${esc(d.nokp)} · ${esc(d.kelas)} · ${list.length} rekod</span></div>
     <div class="addrow"><select id="dr-type">${types.length?types.map(t=>'<option>'+esc(t)+'</option>').join(''):'<option value="">(Tiada jenis)</option>'}</select><input type="date" id="dr-date" value="${new Date().toISOString().slice(0,10)}"><input id="dr-note" placeholder="Catatan (pilihan)"><button class="btn btn-primary" id="dr-add">Rekod</button></div>
     <div id="dr-list">${list.map(o=>'<div class="item"><span class="grow"><span class="nm">'+esc(o.offence_type)+'</span><br><span class="sub">'+esc(o.odate||'')+(o.recorded_name?' · '+esc(o.recorded_name):'')+(o.note?' · '+esc(o.note):'')+'</span></span><button class="icon-btn danger" data-del="'+o.id+'">Padam</button></div>').join('')||'<div class="sub">Tiada rekod.</div>'}</div>`;
   $('#dr-back').onclick=()=>{const k=$('#dr-kelas').value;if(k)drList(k);else dzRekod();};
+  $('#dr-cetak').onclick=()=>cetakBorangKesalahan({name:d.name,nokp:d.nokp,kelas:d.kelas},list);
   $('#dr-add').onclick=async()=>{const type=$('#dr-type').value,note=$('#dr-note').value.trim(),odate=$('#dr-date').value;if(!type){toast('Pilih jenis');return;}try{const {error}=await sb.from('offences').insert({student_nokp:d.nokp,student_name:d.name,class_name:d.kelas,offence_type:type,note,odate,recorded_by:null,recorded_name:adminName});if(error)throw error;toast('Direkod ✓');drProfil(d);}catch(e){toast('Ralat: '+e.message);}};
   $('#dr-list').onclick=async e=>{const b=e.target.closest('[data-del]');if(!b)return;if(confirm('Padam rekod ini?')){try{const {error}=await sb.from('offences').delete().eq('id',b.dataset.del);if(error)throw error;drProfil(d);toast('Dipadam');}catch(e){toast('Ralat: '+e.message);}}};
 }

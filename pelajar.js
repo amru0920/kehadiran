@@ -33,6 +33,7 @@ function studentRow(s,i,info){
   return `<div class="dcard" data-id="${s.id}" style="${style}"><div class="info"><div class="cn">${i!=null?i+1+'. ':''}${esc(s.name)}${tag}</div><div class="det">${esc(s.nokp)} · ${esc(s.kelas||'')}${detExtra}</div></div></div>`;
 }
 async function listByClass(kelas){
+  $('#pp-print').onclick=()=>window.print();
   if(!kelas){$('#pp-out').innerHTML='';return;}
   const list=state.students.filter(s=>s.kelas===kelas).sort((a,b)=>a.name.localeCompare(b.name));
   $('#pp-out').innerHTML='<div class="empty">Memuat…</div>';
@@ -50,6 +51,7 @@ async function listByClass(kelas){
   $('#pp-out').onclick=e=>{const d=e.target.closest('[data-id]');if(d){const s=state.students.find(x=>x.id===d.dataset.id);if(s)showProfil(s,kelas);}};
 }
 function ppSearch(){
+  $('#pp-print').onclick=()=>window.print();
   const q=$('#pp-q').value.trim().toLowerCase();
   if(!q){toast('Taip carian');return;}
   $('#pp-kelas').value='';
@@ -62,9 +64,10 @@ function ppSearch(){
 async function showProfil(s,backClass){
   $('#pp-out').innerHTML='<div class="empty">Memuat…</div>';
   try{
-    const [abs,disc,sessR]=await Promise.all([
+    const [abs,disc,off,sessR]=await Promise.all([
       DB.studentAbsences(s.id),
       DB.listDiscipline(s.nokp),
+      DB.listOffences(s.nokp).catch(()=>[]),
       sb.from('attendance_sessions').select('subject').eq('class_name',s.kelas)
     ]);
     if(sessR.error)throw sessR.error;
@@ -80,9 +83,18 @@ async function showProfil(s,backClass){
       <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow)">
         <div style="font-size:18px;font-weight:800">${esc(s.name)}</div>
         <div style="font-size:13px;color:var(--muted)">${esc(s.nokp)} · ${esc(s.kelas||'')}</div>
+        ${(off.length||disc.length)?`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+          ${off.length?`<span class="pill">${off.length} kesalahan disiplin</span>`:''}
+          ${disc.length?`<span class="pill" style="background:#fdf2e1;color:var(--warn)">${disc.length} tindakan HEM</span>`:''}</div>`:''}
       </div>
       <div class="lap-head" style="margin:0 0 10px"><div class="field" style="flex:1"><label>Tapis ikut subjek</label><select id="pp-subj"><option value="">Semua subjek</option>${subjects.map(j=>`<option>${esc(j)}</option>`).join('')}</select></div></div>
       <div id="pp-body"></div>
+
+      <h3 style="font-size:14px;margin:18px 2px 8px">Rekod Kesalahan Disiplin${off.length?` <span class="pill">${off.length}</span>`:''}</h3>
+      ${off.length?`<table class="rpt-table"><tr><th>Tarikh</th><th>Jenis Kesalahan</th><th>Catatan</th><th>Direkod Oleh</th></tr>
+        ${off.map(o=>`<tr><td>${o.odate?esc(fmtDate(o.odate)):'-'}</td><td><b>${esc(o.offence_type||'-')}</b></td><td style="color:var(--muted)">${esc(o.note||'-')}</td><td>${esc(o.recorded_name||'-')}</td></tr>`).join('')}
+        </table><p class="legend" style="margin-top:6px">Rekod kesalahan dimasukkan melalui tab <b>Disiplin</b>.</p>`
+        :'<div class="empty" style="padding:16px;color:var(--present)">✓ Tiada rekod kesalahan disiplin.</div>'}
 
       <h3 style="font-size:14px;margin:18px 2px 8px">Hukuman / Tindakan HEM</h3>
       ${isAdmin?`<div class="lap-head" style="margin:0 0 10px">
@@ -116,6 +128,7 @@ async function showProfil(s,backClass){
     };
     renderBody();
     $('#pp-subj').onchange=renderBody;
+    $('#pp-print').onclick=()=>cetakBorangProfil(s,{absen:absAll,offences:off,hukuman:disc,total:totalAll});
     if(backClass)$('#pp-back').onclick=()=>listByClass(backClass);
     if(isAdmin){
       $('#hk-add').onclick=async()=>{

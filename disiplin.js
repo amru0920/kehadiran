@@ -25,7 +25,7 @@ async function dpProfil(s,back){
   try{
     const list=await DB.listOffences(s.nokp);
     const types=state.offenceTypes||[];
-    const backBtn=back?`<button class="btn btn-ghost" id="dp-back" style="margin-bottom:10px">← Senarai ${esc(back)}</button>`:'';
+    const backBtn=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${back?`<button class="btn btn-ghost" id="dp-back">← Senarai ${esc(back)}</button>`:''}<button class="btn btn-primary" id="dp-cetak">🖨 Cetak Borang</button></div>`;
     $('#dp-out').innerHTML=`${backBtn}
       <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow)">
         <div style="font-size:18px;font-weight:800">${esc(s.name)}</div>
@@ -42,6 +42,7 @@ async function dpProfil(s,back){
         ${o.note?`<div style="margin-top:3px;font-size:14px">${esc(o.note)}</div>`:''}
         <button class="hbtn" data-del="${o.id}" style="margin-top:6px;color:var(--absent);font-size:12px;padding:5px 10px">Padam</button></div>`).join(''):'<div class="empty" style="padding:16px">Tiada rekod kesalahan.</div>'}</div>`;
     if(back)$('#dp-back').onclick=()=>dpList(back);
+    $('#dp-cetak').onclick=()=>cetakBorangKesalahan(s,list);
     $('#dp-add').onclick=async()=>{
       const type=$('#dp-type').value,note=$('#dp-note').value.trim(),odate=$('#dp-date').value;
       if(!type){toast('Pilih jenis kesalahan');return;}
