@@ -10,6 +10,12 @@ const KCATS=[
 const KCAT=k=>KCATS.find(c=>c.k===k)||{l:k,s:k,c:'#6b7585'};
 const KOKU={units:[],members:[],byId:{},loaded:false,err:null};
 const KOKU_REASONS=['Tanpa Sebab','Sakit','Urusan Sekolah','Dengan Kebenaran'];
+/* jadual kehadiran (koku_sessions/koku_absentees) mungkin belum dibuat —
+   senarai ahli mesti tetap berfungsi tanpanya */
+const kokuTiadaJadualSesi=e=>/koku_sessions|koku_absentees|schema cache|does not exist/i.test(e?.message||'');
+const kokuNotaSesi=`<div class="soon" style="margin-top:0"><span class="tagsoon">KEHADIRAN BELUM DIBUKA</span>
+  <h3>Jadual perjumpaan belum wujud</h3>
+  <p>Unit dan ahli sudah sedia, cuma jadual <code>koku_sessions</code> belum dicipta. Pentadbir perlu jalankan fail <b>koku-kehadiran.sql</b> sekali di Supabase (SQL Editor). Data unit dan ahli tidak terjejas.</p></div>`;
 
 async function kokuLoad(force){
   if(KOKU.loaded&&!force)return !KOKU.err;
@@ -124,7 +130,18 @@ async function khLoad(){
     }
     $('#kh-info').textContent=ses?`✏️ Mod edit — rekod ${fmtDate(date)} dimuatkan${ses.recorded_name?' · direkod oleh '+ses.recorded_name:''}`:'Belum disimpan';
     $('#kh-simpan').textContent=ses?'Kemaskini Kehadiran':'Simpan Kehadiran';
-  }catch(e){toast('Ralat memuat: '+e.message);}
+    KH.sedia=true;
+  }catch(e){
+    if(kokuTiadaJadualSesi(e)){
+      KH.sedia=false;
+      $('#kh-roster').innerHTML=kokuNotaSesi;
+      $('#kh-info').textContent='Jadual kehadiran belum dibuka';
+      $('#kh-lepas').innerHTML='';
+      ['kh-hadir','kh-tidak','kh-jumlah'].forEach(x=>$('#'+x).textContent='0');
+      return;
+    }
+    toast('Ralat memuat: '+e.message);
+  }
   khRender(); khPast();
 }
 
@@ -148,6 +165,7 @@ function khRender(){
 async function khSave(){
   if(!KH.unit){toast('Pilih unit');return;}
   if(!KH.date){toast('Pilih tarikh');return;}
+  if(KH.sedia===false){toast('Jadual kehadiran belum dibuka — jalankan koku-kehadiran.sql di Supabase');return;}
   if(!KH.roster.length){toast('Unit ini belum ada ahli');return;}
   const masa=(()=>{const a=$('#kh-mula').value,b=$('#kh-tamat').value;return a&&b?`${a}-${b}`:(a||'');})();
   $('#kh-simpan').disabled=true;
@@ -160,7 +178,7 @@ async function khSave(){
     $('#kh-simpan').textContent='Kemaskini Kehadiran';
     toast('Kehadiran perjumpaan disimpan ✓');
     khPast();
-  }catch(e){toast('Ralat simpan: '+e.message);}
+  }catch(e){toast(kokuTiadaJadualSesi(e)?'Jadual kehadiran belum dibuka — jalankan koku-kehadiran.sql di Supabase':'Ralat simpan: '+e.message);}
   $('#kh-simpan').disabled=false;
 }
 
@@ -169,7 +187,8 @@ async function khPast(){
   if(!KH.unit){box.innerHTML='';return;}
   box.innerHTML='<div class="empty" style="padding:16px">Memuat…</div>';
   let ss=[];
-  try{ss=await DB.kokuSessionsByUnit(KH.unit.id);}catch(e){box.innerHTML='<div class="empty" style="padding:16px">Ralat: '+esc(e.message)+'</div>';return;}
+  try{ss=await DB.kokuSessionsByUnit(KH.unit.id);}
+  catch(e){box.innerHTML=kokuTiadaJadualSesi(e)?kokuNotaSesi:'<div class="empty" style="padding:16px">Ralat: '+esc(e.message)+'</div>';return;}
   const total=KH.roster.length;
   if(!ss.length){box.innerHTML='<div class="empty" style="padding:16px">Belum ada rekod perjumpaan untuk unit ini.</div>';return;}
   box.innerHTML=`<table class="rpt-table">
@@ -220,8 +239,10 @@ async function kokuUnitBody(){
   const u=KOKU.byId[id];
   out.innerHTML='<div class="empty">Memuat…</div>';
   let rows=[],ss=[];
-  try{[rows,ss]=await Promise.all([DB.kokuMembersByUnit(id),DB.kokuSessionsByUnit(id)]);}
+  try{rows=await DB.kokuMembersByUnit(id);}
   catch(e){out.innerHTML='<div class="empty">Ralat: '+esc(e.message)+'</div>';return;}
+  try{ss=await DB.kokuSessionsByUnit(id);}
+  catch(e){ss=[];}                      // jadual kehadiran belum ada — papar senarai ahli sahaja
   rows.sort((a,b)=>((a.students?.kelas||'').localeCompare(b.students?.kelas||''))||((a.students?.name||'').localeCompare(b.students?.name||'')));
   const sesi=ss.length, tidak={};
   ss.forEach(s=>(s.koku_absentees||[]).forEach(a=>{tidak[a.student_id]=(tidak[a.student_id]||0)+1;}));
