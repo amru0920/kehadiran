@@ -5,7 +5,7 @@
      - pustaka CDN & font: cache-first (versi tetap, jimat data)
      - API Supabase      : TIDAK PERNAH di-cache (data mesti terkini)
    Naikkan VER setiap kali fail app dikemas kini. */
-const VER   = 'kehadiran-v2';
+const VER   = 'kehadiran-v3';
 const SHELL = VER + '-shell';
 const LIB   = VER + '-lib';
 

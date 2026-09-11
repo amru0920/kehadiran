@@ -14,6 +14,8 @@ async function fetchOffences(from,to,cls){
   if(from)q=q.gte('odate',from); if(to)q=q.lte('odate',to); if(cls)q=q.eq('class_name',cls);
   const {data,error}=await q.order('odate',{ascending:false}); if(error)throw error; return data||[];
 }
+const DZ_LABEL={hari:'Hari Ini',minggu:'7 Hari Lepas',bulan:'Bulan Ini',semua:'Semua Rekod'};
+function dzTempoh(){const p=dzPeriod(),[f,t]=dzRange(p);return (DZ_LABEL[p]||p)+(f&&t?` (${f} hingga ${t})`:'');}
 function dzPeriod(){return document.querySelector('#dz-period button.active')?.dataset.p||'bulan';}
 function dzRange(p){const t=new Date();const to=t.toISOString().slice(0,10);
   if(p==='hari')return[to,to];
@@ -39,19 +41,21 @@ async function dzRun(){
   const byStu={};
   data.forEach(o=>{const k=o.student_nokp;byStu[k]=byStu[k]||{nokp:k,name:o.student_name,kelas:o.class_name,count:0,last:o.odate};byStu[k].count++;});
   const stuRows=Object.values(byStu).sort((a,b)=>b.count-a.count);
-  box.innerHTML=`<p class="legend">${stuRows.length} murid · ${data.length} kesalahan. Tekan nama untuk butiran.</p>`+
+  box.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-primary" id="dz-cetak">🖨 Cetak Laporan</button></div>
+    <p class="legend">${stuRows.length} murid · ${data.length} kesalahan. Tekan nama untuk butiran.</p>`+
     stuRows.map(s=>{const col=s.count>=5?'var(--absent)':s.count>=3?'#e8743b':s.count>=2?'var(--warn)':'var(--muted)';
       return `<div class="item" data-nokp="${esc(s.nokp)}" style="cursor:pointer;border-left:4px solid ${col}">
         <span class="grow"><span class="nm">${esc(s.name||'-')}</span><br><span class="sub">${esc(s.kelas||'')}</span></span>
         <span class="pill" style="background:${col};color:#fff">${s.count} kesalahan</span></div>`;}).join('');
   box.onclick=e=>{const it=e.target.closest('[data-nokp]');if(it)dzStudent(it.dataset.nokp);};
+  $('#dz-cetak').onclick=()=>cetakLaporanDisiplin({tempoh:dzTempoh(),kelas:$('#dz-cls').value||'Semua kelas',oleh:adminName},dzData);
 }
 function dzStudent(nokp){
   const box=$('#dz-lout');
   const rows=dzData.filter(o=>o.student_nokp===nokp).sort((a,b)=>(b.odate||'').localeCompare(a.odate||''));
   const s=rows[0]||{};
   const byType={};rows.forEach(o=>byType[o.offence_type]=(byType[o.offence_type]||0)+1);
-  box.innerHTML=`<button class="btn btn-ghost" id="dz-back" style="margin-bottom:10px">← Kembali</button>
+  box.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-ghost" id="dz-back">← Kembali</button><button class="btn btn-primary" id="dz-cetak1">🖨 Cetak Borang</button></div>
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)">
       <div style="font-size:17px;font-weight:800">${esc(s.student_name||'-')}</div>
       <div style="font-size:13px;color:var(--muted)">${esc(nokp)} · ${esc(s.class_name||'')}</div>
@@ -61,6 +65,7 @@ function dzStudent(nokp){
     <table class="rpt-table"><tr><th>Tarikh</th><th>Kesalahan</th><th>Catatan</th><th>Direkod</th></tr>
     ${rows.map(o=>'<tr><td>'+esc(o.odate||'')+'</td><td><b>'+esc(o.offence_type)+'</b></td><td>'+esc(o.note||'-')+'</td><td>'+esc(o.recorded_name||'')+'</td></tr>').join('')}</table>`;
   $('#dz-back').onclick=dzRun;
+  $('#dz-cetak1').onclick=()=>cetakBorangKesalahan({name:s.student_name||'-',nokp,kelas:s.class_name||'-'},rows);
 }
 async function dzJenis(){
   const box=$('#dz-out');box.innerHTML='<div class="empty">Memuat…</div>';

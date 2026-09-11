@@ -125,3 +125,49 @@ function cetakBorangProfil(s, d) {
     ${prTandatangan('Guru Kelas / Guru Disiplin', 'Penolong Kanan HEM')}
     ${prKaki()}`);
 }
+
+/* ---------- BORANG 3: laporan kesalahan disiplin (kelas / tempoh) ---------- */
+function cetakLaporanDisiplin(meta, list) {
+  list = (list || []).slice().sort((a, b) => String(b.odate || '').localeCompare(String(a.odate || '')));
+  const byStu = {};
+  list.forEach(o => {
+    const k = o.student_nokp || o.student_name;
+    byStu[k] = byStu[k] || { nokp: o.student_nokp || '-', name: o.student_name || '-', kelas: o.class_name || '-', n: 0, jenis: {} };
+    byStu[k].n++;
+    byStu[k].jenis[o.offence_type] = (byStu[k].jenis[o.offence_type] || 0) + 1;
+  });
+  const murid = Object.values(byStu).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+
+  cetakDoc(`
+    ${prKepala('Laporan Kesalahan Disiplin Murid', 'Unit Hal Ehwal Murid')}
+    <table class="pr-meta">
+      <tr><td class="k">Tempoh</td><td class="v"><b>${esc(meta.tempoh || '-')}</b></td>
+          <td class="k">Kelas</td><td class="v">${esc(meta.kelas || 'Semua kelas')}</td></tr>
+      <tr><td class="k">Jumlah Murid</td><td class="v"><b>${murid.length}</b> orang</td>
+          <td class="k">Jumlah Kesalahan</td><td class="v"><b>${list.length}</b> rekod</td></tr>
+      <tr><td class="k">Tarikh Cetak</td><td class="v">${esc(prMasaKini())}</td>
+          <td class="k">Dicetak Oleh</td><td class="v">${esc(meta.oleh || '-')}</td></tr>
+    </table>
+
+    <div class="pr-sec">A. Ringkasan Mengikut Murid</div>
+    ${murid.length ? `<table class="pr-tbl">
+      <tr><th style="width:34px">Bil</th><th>Nama Murid</th><th style="width:110px">No. KP</th><th style="width:90px">Kelas</th>
+          <th style="width:50px">Bil</th><th>Jenis Kesalahan</th></tr>
+      ${murid.map((m, i) => `<tr><td>${i + 1}</td><td><b>${esc(m.name)}</b></td><td>${esc(m.nokp)}</td><td>${esc(m.kelas)}</td>
+        <td>${m.n}</td><td>${esc(Object.entries(m.jenis).sort((a, b) => b[1] - a[1]).map(([t, n]) => t + ' ×' + n).join(', '))}</td></tr>`).join('')}
+    </table>` : `<div class="pr-none">Tiada rekod kesalahan bagi tapisan ini.</div>`}
+
+    ${list.length ? `<div class="pr-sec">B. Butiran Setiap Kesalahan</div>
+    <table class="pr-tbl">
+      <tr><th style="width:34px">Bil</th><th style="width:96px">Tarikh</th><th>Nama Murid</th><th style="width:80px">Kelas</th>
+          <th>Jenis Kesalahan</th><th>Catatan</th><th style="width:110px">Direkod Oleh</th></tr>
+      ${list.map((o, i) => `<tr><td>${i + 1}</td><td>${esc(prTarikh(o.odate))}</td><td>${esc(o.student_name || '-')}</td>
+        <td>${esc(o.class_name || '-')}</td><td><b>${esc(o.offence_type || '-')}</b></td><td>${esc(o.note || '-')}</td>
+        <td>${esc(o.recorded_name || '-')}</td></tr>`).join('')}
+    </table>` : ''}
+
+    <div class="pr-note">Laporan ini dijana daripada rekod kesalahan disiplin dalam Sistem Kehadiran sekolah bagi tempoh yang dinyatakan.
+      Tindakan susulan hendaklah mengikut Peraturan Sekolah dan garis panduan Kementerian Pendidikan Malaysia.</div>
+    ${prTandatangan('Guru Disiplin', 'Penolong Kanan HEM')}
+    ${prKaki()}`);
+}

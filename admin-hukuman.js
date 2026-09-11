@@ -53,23 +53,30 @@ async function hkProfil(d){
   const box=$('#hk-out');
   box.innerHTML='<div class="empty">Memuat…</div>';
   try{
-    const [absR,discR]=await Promise.all([
+    const [absR,discR,offR,sesR]=await Promise.all([
       sb.from('absentees').select('reason,attendance_sessions(date,class_name,subject,session_time,recorded_by)').eq('student_id',d.id),
-      sb.from('discipline').select('*').eq('student_nokp',d.nokp).order('created_at',{ascending:false})
+      sb.from('discipline').select('*').eq('student_nokp',d.nokp).order('created_at',{ascending:false}),
+      sb.from('offences').select('*').eq('student_nokp',d.nokp).order('odate',{ascending:false}),
+      sb.from('attendance_sessions').select('id',{count:'exact',head:true}).eq('class_name',d.kelas)
     ]);
     if(absR.error)throw absR.error; if(discR.error)throw discR.error;
-    const abs=absR.data||[], disc=discR.data||[];
+    const abs=absR.data||[], disc=discR.data||[], off=offR.data||[], totalSesi=sesR.count||0;
     const aRows=abs.filter(a=>a.reason!==NA).map(a=>({date:a.attendance_sessions?.date||'-',subject:a.attendance_sessions?.subject||'-',masa:a.attendance_sessions?.session_time||'',cikgu:tName(a.attendance_sessions?.recorded_by||'?'),reason:a.reason})).sort((x,y)=>y.date.localeCompare(x.date));
-    box.innerHTML=`<button class="btn btn-ghost" id="hk-back" style="margin-bottom:10px">← Kembali</button>
+    box.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-ghost" id="hk-back">← Kembali</button><button class="btn btn-primary" id="hk-cetak">🖨 Cetak Profil</button></div>
       <div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)">
         <div style="font-size:17px;font-weight:800">${esc(d.name)}</div>
         <div style="font-size:13px;color:var(--muted)">${esc(d.nokp)} · ${esc(d.kelas)}</div>
-        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><span class="pill" style="background:var(--absent-soft);color:var(--absent)">${abs.filter(a=>a.reason!==NA).length} kali tidak hadir</span><span class="pill g">${disc.length} rekod hukuman</span></div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><span class="pill" style="background:var(--absent-soft);color:var(--absent)">${abs.filter(a=>a.reason!==NA).length} kali tidak hadir</span><span class="pill g">${disc.length} rekod hukuman</span>${off.length?`<span class="pill">${off.length} kesalahan disiplin</span>`:''}</div>
       </div>
       <h4 style="margin:6px 2px 8px;color:var(--brand)">Butiran Tidak Hadir</h4>
       ${aRows.length?`<table class="rpt-table"><tr><th>Tarikh</th><th>Subjek</th><th>Masa</th><th>Cikgu (rekod)</th><th>Sebab</th></tr>
         ${aRows.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.subject)}</td><td>${esc(fmtMasa(a.masa))}</td><td>${esc(a.cikgu)}</td><td><span class="pill">${esc(a.reason)}</span></td></tr>`).join('')}
         </table>`:'<div class="empty" style="padding:12px">Tiada rekod.</div>'}
+      <h4 style="margin:18px 2px 8px;color:var(--brand)">Rekod Kesalahan Disiplin</h4>
+      ${off.length?`<table class="rpt-table"><tr><th>Tarikh</th><th>Jenis Kesalahan</th><th>Catatan</th><th>Direkod Oleh</th></tr>
+        ${off.map(o=>'<tr><td>'+esc(o.odate||'')+'</td><td><b>'+esc(o.offence_type||'-')+'</b></td><td>'+esc(o.note||'-')+'</td><td>'+esc(o.recorded_name||'-')+'</td></tr>').join('')}
+        </table>`:'<div class="empty" style="padding:12px;color:var(--present)">✓ Tiada rekod kesalahan disiplin.</div>'}
+
       <h4 style="margin:18px 2px 8px;color:var(--brand)">Hukuman / Tindakan</h4>
       <div class="addrow">
         <select id="hk-action">${actionsFor(d.nokp).map(a=>`<option>${a}</option>`).join('')}</select>
@@ -80,6 +87,7 @@ async function hkProfil(d){
       <div id="hk-disc" style="margin-top:8px">${disc.length?disc.map(x=>`<div class="item"><span class="grow"><span class="nm">${esc(x.action)}</span><br><span class="sub">${esc((x.created_at||'').slice(0,10))}${x.recorded_name?' · '+esc(x.recorded_name):''}${x.note?' · '+esc(x.note):''}</span></span><button class="icon-btn danger" data-del="${x.id}">Padam</button></div>`).join(''):'<div class="sub">Tiada rekod hukuman.</div>'}</div>`;
 
     $('#hk-back').onclick=()=>{const k=$('#hk-kelas').value;if(k)hkListByClass(k);else hkSearch();};
+    $('#hk-cetak').onclick=()=>cetakBorangProfil({name:d.name,nokp:d.nokp,kelas:d.kelas},{absen:aRows,offences:off,hukuman:disc,total:totalSesi});
     $('#hk-add').onclick=async()=>{
       const action=$('#hk-action').value,note=$('#hk-note').value.trim();
       try{const {error}=await sb.from('discipline').insert({student_nokp:d.nokp,student_name:d.name,class_name:d.kelas,action,note,recorded_by:null,recorded_name:adminName});
